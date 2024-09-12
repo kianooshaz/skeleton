@@ -36,7 +36,6 @@ cover.out
 cover.html
 .coverage.out
 .coverage.html
-skeleton
 
 # tmp
 *.tmp
