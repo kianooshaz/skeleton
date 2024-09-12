@@ -23,3 +23,23 @@ go.work.sum
 
 # env file
 .env
+
+# ide
+.idea
+.vscode
+
+# logs
+*.log
+
+# test & pprof
+cover.out
+cover.html
+.coverage.out
+.coverage.html
+skeleton
+
+# tmp
+*.tmp
+
+# mock
+mocks/*_mock.go
