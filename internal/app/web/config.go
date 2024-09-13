@@ -4,16 +4,21 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golobby/config/v3"
 	"github.com/golobby/config/v3/pkg/feeder"
+	"github.com/kianooshaz/skeleton/foundation/postgres"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest"
 )
 
 type Config struct {
-	Version string       `yaml:"version" env:"SKELETON_VERSION" validate:"required"`
-	Rest    *rest.Config `yaml:"rest" validate:"required"`
+	Version         string           `yaml:"version" env:"SKELETON_VERSION" validate:"required"`
+	ShutdownTimeout time.Duration    `yaml:"shutdown_timeout"`
+	Rest            *rest.Config     `yaml:"rest" validate:"required"`
+	Postgres        *postgres.Config `yaml:"postgres" validate:"required"`
 }
 
 func newConfig(configPath string) (*Config, error) {
@@ -40,15 +45,8 @@ func newConfig(configPath string) (*Config, error) {
 	}
 
 	c.SetupListener(func(err error) {
-		// todo: lock application
-
-		if err := cfg.Validate(); err != nil {
-			if err := gob.NewDecoder(&backupCfg).Decode(&cfg); err != nil {
-				fmt.Printf("error at load backup config: %v", err)
-			}
-
-			fmt.Printf("reverted config, new config validation failed: %v\n", err.Error())
-			return
+		if err != nil {
+			log.Printf("error at setup listener: %v", err)
 		}
 
 		if err := gob.NewEncoder(&backupCfg).Encode(cfg); err != nil {

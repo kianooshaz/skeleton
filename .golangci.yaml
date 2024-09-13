@@ -1,0 +1,78 @@
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable-all: true
+  disable:
+    - nolintlint
+    - wrapcheck
+    - exhaustruct
+    - gci
+    - gofumpt
+    - forbidigo
+    - dupword
+    - gochecknoglobals
+    - gomnd
+    - dupl
+    - lll
+    - tagalign
+    - wsl
+    - varnamelen
+    - execinquery
+    - exportloopref
+    - mnd
+issues:
+  fix: false
+  exclude-rules:
+    - path: '(.+)_test\.go'
+      linters:
+        - funlen
+        - goconst
+    - path: '(.+)\.gen\.go'
+      linters:
+        - godot
+        - gocritic
+        - wrapcheck
+
+linters-settings:
+  cyclop:
+    max-complexity: 62
+  gocyclo:
+    min-complexity: 62
+  godot:
+    exclude:
+      - "^ @"
+  tagliatelle:
+    case:
+      use-field-name: true
+      rules:
+        json: snake
+        yaml: snake
+  varnamelen:
+    min-name-length: 2
+    ignore-names:
+      - ws
+      - id
+    ignore-decls:
+      - c echo.Context
+      - t testing.T
+      - e error
+      - i int
+      - T any
+      - e *echo.Echo
+      - v1 *echo.Group
+      - v2 *echo.Group
+  depguard:
+    rules:
+      prevent_unmaintained_packages:
+        files:
+          - $all
+          - "!$test"
+        allow:
+        deny:
+          - pkg: io/ioutil
+            desc: "replaced by io and os packages since Go 1.16: https://tip.golang.org/doc/go1.16#ioutil"
+          - pkg: reflect
+            desc: "Please don't use reflect package"

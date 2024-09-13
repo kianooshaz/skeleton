@@ -1,0 +1,16 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "module/usermod/stores/query.sql"
+    schema: "module/usermod/stores/schema.sql"
+    gen:
+      go:
+        emit_methods_with_db_argument: true
+        package: "userdb"
+        out: "module/usermod/stores/userdb"
+        sql_package: "pgx/v5"
+        overrides:
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"

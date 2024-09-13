@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16.4-alpine3.20
+    ports:
+      - 5432:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=skeleton_pass
+      - POSTGRES_USER=skeleton_user
+      - POSTGRES_DB=skeleton
+volumes:
+  db:
+    driver: local

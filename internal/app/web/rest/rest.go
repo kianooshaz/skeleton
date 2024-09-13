@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/kianooshaz/skeleton/internal/app/web/rest/handler"
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
 )
@@ -34,9 +35,10 @@ type Config struct {
 type Server struct {
 	core    *echo.Echo
 	address string
+	handler *handler.Handler
 }
 
-func New(cfg *Config) *Server {
+func New(cfg *Config, h *handler.Handler) *Server {
 	e := echo.New()
 
 	e.HideBanner = true
@@ -62,6 +64,7 @@ func New(cfg *Config) *Server {
 	server := &Server{
 		core:    e,
 		address: cfg.Address,
+		handler: h,
 	}
 
 	server.registerRoutes()

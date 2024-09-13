@@ -13,6 +13,7 @@ func main() {
 
 	if err := web.Serve(*configPath); err != nil {
 		log.Printf("error at serving: %s", err.Error())
+
 		return
 	}
 }
