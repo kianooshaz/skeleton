@@ -8,10 +8,12 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golobby/config/v3"
 	"github.com/golobby/config/v3/pkg/feeder"
+	"github.com/kianooshaz/skeleton/internal/app/web/rest"
 )
 
 type Config struct {
-	Version string `yaml:"version" env:"SKELETON_VERSION" validate:"required"`
+	Version string       `yaml:"version" env:"SKELETON_VERSION" validate:"required"`
+	Rest    *rest.Config `yaml:"rest" validate:"required"`
 }
 
 func newConfig(configPath string) (*Config, error) {

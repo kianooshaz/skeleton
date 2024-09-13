@@ -2,9 +2,8 @@ package web
 
 import (
 	"fmt"
-	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/kianooshaz/skeleton/internal/app/web/rest"
 )
 
 func Serve(configPath string) error {
@@ -13,10 +12,7 @@ func Serve(configPath string) error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	e := echo.New()
-	e.GET("/version", func(c echo.Context) error {
-		return c.String(http.StatusOK, cfg.Version)
-	})
+	e := rest.New(cfg.Rest)
 
-	return e.Start(":1323")
+	return e.Start()
 }
