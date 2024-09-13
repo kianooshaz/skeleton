@@ -1,6 +1,11 @@
 package web
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+)
 
 func Serve(configPath string) error {
 	cfg, err := newConfig(configPath)
@@ -8,7 +13,10 @@ func Serve(configPath string) error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	fmt.Println("version:", cfg.Version)
+	e := echo.New()
+	e.GET("/version", func(c echo.Context) error {
+		return c.String(http.StatusOK, cfg.Version)
+	})
 
-	return nil
+	return e.Start(":1323")
 }
