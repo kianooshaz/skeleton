@@ -1,7 +1,9 @@
 package handler
 
-import "github.com/kianooshaz/skeleton/module/usermod"
+import (
+	"github.com/kianooshaz/skeleton/protocol"
+)
 
 type Handler struct {
-	User *usermod.Module
+	User protocol.ServiceUser
 }

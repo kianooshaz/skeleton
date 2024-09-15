@@ -1,4 +1,4 @@
-package usermod
+package usersrv
 
 import (
 	"context"
@@ -8,13 +8,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/kianooshaz/skeleton/foundation/order"
+	"github.com/kianooshaz/skeleton/protocol"
 )
 
 var (
 	ErrNotFound = errors.New("user not found")
 )
 
-func (m *Module) New(ctx context.Context) (User, error) {
+func (m *Module) New(ctx context.Context) (protocol.User, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
 		return User{}, fmt.Errorf("new uuid: %w", err)
@@ -31,7 +32,7 @@ func (m *Module) New(ctx context.Context) (User, error) {
 	}, nil
 }
 
-func (m *Module) Get(ctx context.Context, id uuid.UUID) (User, error) {
+func (m *Module) Get(ctx context.Context, id uuid.UUID) (protocol.User, error) {
 	user, err := m.queries.Get(ctx, m.pool, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -47,13 +48,13 @@ func (m *Module) Get(ctx context.Context, id uuid.UUID) (User, error) {
 	}, nil
 }
 
-func (m *Module) List(ctx context.Context, orderBy order.By) ([]User, error) {
+func (m *Module) List(ctx context.Context, orderBy order.By) ([]protocol.User, error) {
 	users, err := m.queries.List(ctx, m.pool, orderBy.PGX())
 	if err != nil {
 		return nil, fmt.Errorf("list users: %w", err)
 	}
 
-	list := make([]User, 0, len(users))
+	list := make([]protocol.User, 0, len(users))
 	for _, u := range users {
 		list = append(list, User{
 			ID:        u.ID,

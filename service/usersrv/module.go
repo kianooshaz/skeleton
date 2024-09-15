@@ -1,8 +1,10 @@
-package usermod
+package usersrv
 
 import (
+	"context"
+
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kianooshaz/skeleton/module/usermod/stores/userdb"
+	"github.com/kianooshaz/skeleton/service/usersrv/stores/userdb"
 )
 
 type (
@@ -17,4 +19,8 @@ func New(pool *pgxpool.Pool) *Module {
 		pool:    pool,
 		queries: userdb.New(),
 	}
+}
+
+type UserI interface {
+	New(ctx context.Context) (User, error)
 }

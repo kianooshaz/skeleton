@@ -1,4 +1,4 @@
-package usermod
+package usersrv
 
 import "github.com/kianooshaz/skeleton/foundation/order"
 

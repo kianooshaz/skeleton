@@ -1,4 +1,3 @@
-// Package order provides support for describing the ordering of data.
 package order
 
 import (
@@ -6,7 +5,6 @@ import (
 	"strings"
 )
 
-// Set of directions for data ordering.
 const (
 	ASC  = "ASC"
 	DESC = "DESC"
@@ -20,13 +18,11 @@ var directions = map[string]string{
 var ErrUnkownOrder = errors.New("unknown order")
 var ErrUnkownDirection = errors.New("unknown direction")
 
-// By represents a field used to order by and direction.
 type By struct {
 	Field     string
 	Direction string
 }
 
-// NewBy constructs a new By value with no checks.
 func NewBy(field string, direction string) By {
 	if _, exists := directions[direction]; !exists {
 		return By{
@@ -41,8 +37,6 @@ func NewBy(field string, direction string) By {
 	}
 }
 
-// Parse constructs a By value by parsing a string in the form of
-// "field,direction" ie "user_id,ASC".
 func Parse(fieldMappings map[string]string, orderBy string, defaultOrder By) (By, error) {
 	if orderBy == "" {
 		return defaultOrder, nil
@@ -71,6 +65,14 @@ func Parse(fieldMappings map[string]string, orderBy string, defaultOrder By) (By
 	default:
 		return By{}, ErrUnkownOrder
 	}
+}
+
+func MustParse(fieldMappings map[string]string, orderBy string, defaultOrder By) By {
+	by, err := Parse(fieldMappings, orderBy, defaultOrder)
+	if err != nil {
+		panic(err)
+	}
+	return by
 }
 
 func (b By) PGX() string {

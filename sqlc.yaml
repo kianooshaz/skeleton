@@ -1,8 +1,8 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "module/usermod/stores/query.sql"
-    schema: "module/usermod/stores/schema.sql"
+    queries: "service/usersrv/stores/query.sql"
+    schema: "service/usersrv/stores/schema.sql"
     gen:
       go:
         emit_methods_with_db_argument: true
