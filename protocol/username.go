@@ -7,3 +7,6 @@ type Username interface {
 	Value() string
 	Status() status.Status
 }
+
+type UsernameService interface {
+}
