@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest/response"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest/response/code"
+	"github.com/kianooshaz/skeleton/protocol"
 	"github.com/labstack/echo/v4"
 )
 
@@ -16,8 +17,8 @@ func (h *Handler) NewUser(c echo.Context) error {
 	}
 
 	data := response.User{
-		ID:        user.ID.String(),
-		CreatedAt: user.CreatedAt.Unix(),
+		ID:        user.ID().String(),
+		CreatedAt: user.CreatedAt().Unix(),
 	}
 
 	return c.JSON(http.StatusOK, response.New(data, nil))
@@ -35,7 +36,7 @@ func (h *Handler) GetUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, response.NewError(code.InvalidUserID))
 	}
 
-	user, err := h.User.Get(c.Request().Context(), id)
+	user, err := h.User.Get(c.Request().Context(), protocol.ID(id))
 	if err != nil {
 
 		return c.JSON(http.StatusInternalServerError, response.NewError(code.InternalServerError))
