@@ -4,17 +4,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kianooshaz/skeleton/protocol"
 )
 
-type User struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
+type userModel struct {
+	id        uuid.UUID
+	createdAt time.Time
 }
 
-func (u User) GetID() uuid.UUID {
-	return u.ID
+func (u userModel) ID() protocol.ID {
+	return [16]byte(u.id)
 }
 
-func (u User) GetCreatedAt() time.Time {
-	return u.CreatedAt
+func (u userModel) CreatedAt() time.Time {
+	return u.createdAt
 }
