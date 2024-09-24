@@ -11,6 +11,7 @@ func NewMeta(page pagination.Page, total, from, to int64, path string) *Meta {
 	if total != 0 {
 		lastPage = math.Ceil(float64(total) / float64(page.RowsPerPage()))
 	}
+
 	return &Meta{
 		CurrentPage: page.Number(),
 		LastPage:    int(lastPage),

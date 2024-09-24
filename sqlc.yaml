@@ -7,7 +7,7 @@ sql:
       go:
         emit_methods_with_db_argument: true
         package: "userdb"
-        out: "module/usermod/stores/userdb"
+        out: "service/usersrv/stores/userdb"
         sql_package: "pgx/v5"
         overrides:
           - db_type: "uuid"

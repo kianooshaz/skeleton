@@ -72,6 +72,7 @@ func MustParse(fieldMappings map[string]string, orderBy string, defaultOrder By)
 	if err != nil {
 		panic(err)
 	}
+
 	return by
 }
 

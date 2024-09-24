@@ -38,7 +38,6 @@ func (h *Handler) GetUser(c echo.Context) error {
 
 	user, err := h.User.Get(c.Request().Context(), protocol.ID(id))
 	if err != nil {
-
 		return c.JSON(http.StatusInternalServerError, response.NewError(code.InternalServerError))
 	}
 

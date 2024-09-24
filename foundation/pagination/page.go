@@ -1,6 +1,7 @@
 package pagination
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 )
@@ -10,13 +11,21 @@ type Page struct {
 	rows   int
 }
 
+var (
+	ErrPageConversion    = errors.New("invalid page value, must be a number")
+	ErrRowsConversion    = errors.New("invalid rows value, must be a number")
+	ErrPageValueTooSmall = errors.New("page value too small, must be larger than 0")
+	ErrRowsValueTooSmall = errors.New("rows value too small, must be larger than 0")
+	ErrRowsValueTooLarge = errors.New("rows value too large, must be less than the maximum allowed")
+)
+
 func Parse(page string, rowsPerPage string, maxRowsPerPage int) (Page, error) {
 	number := 1
 	if page != "" {
 		var err error
 		number, err = strconv.Atoi(page)
 		if err != nil {
-			return Page{}, fmt.Errorf("page conversion: %w", err)
+			return Page{}, ErrPageConversion
 		}
 	}
 
@@ -25,20 +34,20 @@ func Parse(page string, rowsPerPage string, maxRowsPerPage int) (Page, error) {
 		var err error
 		rows, err = strconv.Atoi(rowsPerPage)
 		if err != nil {
-			return Page{}, fmt.Errorf("rows conversion: %w", err)
+			return Page{}, ErrRowsConversion
 		}
 	}
 
 	if number <= 0 {
-		return Page{}, fmt.Errorf("page value too small, must be larger than 0")
+		return Page{}, ErrPageValueTooSmall
 	}
 
 	if rows <= 0 {
-		return Page{}, fmt.Errorf("rows value too small, must be larger than 0")
+		return Page{}, ErrRowsValueTooSmall
 	}
 
 	if rows > maxRowsPerPage {
-		return Page{}, fmt.Errorf("rows value too large, must be less than %d", maxRowsPerPage)
+		return Page{}, ErrRowsValueTooLarge
 	}
 
 	p := Page{

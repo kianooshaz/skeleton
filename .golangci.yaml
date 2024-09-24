@@ -23,6 +23,7 @@ linters:
     - execinquery
     - exportloopref
     - mnd
+    - ireturn
 issues:
   fix: false
   exclude-rules:

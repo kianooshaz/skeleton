@@ -1,6 +1,6 @@
 package status
 
-type Status int64
+type Status uint64
 
 const Unset Status = 0
 
