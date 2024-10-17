@@ -42,3 +42,5 @@ cover.html
 
 # mock
 mocks/*_mock.go
+
+.history
