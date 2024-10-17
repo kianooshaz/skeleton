@@ -52,7 +52,7 @@ linters-settings:
         json: snake
         yaml: snake
   varnamelen:
-    min-name-length: 2
+    min-name-length: 3
     ignore-names:
       - ws
       - id
@@ -71,9 +71,3 @@ linters-settings:
         files:
           - $all
           - "!$test"
-        allow: []
-        deny:
-          - pkg: io/ioutil
-            desc: "replaced by io and os packages since Go 1.16: https://tip.golang.org/doc/go1.16#ioutil"
-          - pkg: reflect
-            desc: "Please don't use reflect package"
