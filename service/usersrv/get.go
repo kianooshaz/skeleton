@@ -14,10 +14,10 @@ func (m *Service) Get(ctx context.Context, id protocol.ID) (protocol.User, error
 	user, err := m.queries.Get(ctx, m.pool, uuid.UUID(id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return userModel{}, ErrNotFound
+			return userModel{}, protocol.ErrNotFound
 		}
 
-		return userModel{}, fmt.Errorf("get userModel with id %v: %w", id, err)
+		return userModel{}, fmt.Errorf("get user with id %v: %w", id, err)
 	}
 
 	return userModel{
