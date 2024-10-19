@@ -9,7 +9,7 @@ import (
 )
 
 func (m *Service) List(ctx context.Context, orderBy order.By) ([]protocol.User, error) {
-	users, err := m.queries.List(ctx, m.pool, orderBy.PGX())
+	users, err := m.queries.List(ctx, orderBy.PGX())
 	if err != nil {
 		return nil, fmt.Errorf("list users: %w", err)
 	}

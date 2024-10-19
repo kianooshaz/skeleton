@@ -5,9 +5,23 @@ sql:
     schema: "service/usersrv/stores/schema.sql"
     gen:
       go:
-        emit_methods_with_db_argument: true
+        emit_methods_with_db_argument: false
         package: "userdb"
         out: "service/usersrv/stores/userdb"
+        sql_package: "pgx/v5"
+        overrides:
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+  - engine: "postgresql"
+    queries: "service/usernamesrv/stores/query.sql"
+    schema: "service/usernamesrv/stores/schema.sql"
+    gen:
+      go:
+        emit_methods_with_db_argument: false
+        package: "usernamedb"
+        out: "service/usernamesrv/stores/usernamedb"
         sql_package: "pgx/v5"
         overrides:
           - db_type: "uuid"

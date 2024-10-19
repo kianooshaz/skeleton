@@ -14,7 +14,7 @@ func (m *Service) New(ctx context.Context) (protocol.User, error) {
 		return userModel{}, fmt.Errorf("new uuid: %w", err)
 	}
 
-	user, err := m.queries.Create(ctx, m.pool, id)
+	user, err := m.queries.Create(ctx, id)
 	if err != nil {
 		return userModel{}, err
 	}

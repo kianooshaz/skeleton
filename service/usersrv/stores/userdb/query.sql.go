@@ -15,8 +15,8 @@ const count = `-- name: Count :one
 SELECT COUNT(id) FROM users
 `
 
-func (q *Queries) Count(ctx context.Context, db DBTX) (int64, error) {
-	row := db.QueryRow(ctx, count)
+func (q *Queries) Count(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, count)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -31,8 +31,8 @@ INSERT INTO users (
 RETURNING id, created_at
 `
 
-func (q *Queries) Create(ctx context.Context, db DBTX, id uuid.UUID) (User, error) {
-	row := db.QueryRow(ctx, create, id)
+func (q *Queries) Create(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, create, id)
 	var i User
 	err := row.Scan(&i.ID, &i.CreatedAt)
 	return i, err
@@ -43,8 +43,8 @@ SELECT id, created_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) Get(ctx context.Context, db DBTX, id uuid.UUID) (User, error) {
-	row := db.QueryRow(ctx, get, id)
+func (q *Queries) Get(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, get, id)
 	var i User
 	err := row.Scan(&i.ID, &i.CreatedAt)
 	return i, err
@@ -57,8 +57,8 @@ ORDER BY
     CASE WHEN $1::varchar = 'created_at_DESC' THEN created_at END DESC
 `
 
-func (q *Queries) List(ctx context.Context, db DBTX, orderBy string) ([]User, error) {
-	rows, err := db.Query(ctx, list, orderBy)
+func (q *Queries) List(ctx context.Context, orderBy string) ([]User, error) {
+	rows, err := q.db.Query(ctx, list, orderBy)
 	if err != nil {
 		return nil, err
 	}

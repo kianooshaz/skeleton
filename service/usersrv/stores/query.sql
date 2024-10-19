@@ -4,7 +4,7 @@ INSERT INTO users (
 ) VALUES (
              $1, NOW()
          )
-RETURNING *;
+RETURNING id, created_at;
 
 -- name: Get :one
 SELECT id, created_at FROM users

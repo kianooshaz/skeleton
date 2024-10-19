@@ -16,7 +16,6 @@ PORT=8080
 .which-sqlc:
 	@which sqlc > /dev/null || (echo "install sqlc from https://sqlc.dev" & exit 1)
 
-
 .now:
 	@date
 

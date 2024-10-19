@@ -7,6 +7,8 @@ import (
 	"github.com/kianooshaz/skeleton/protocol"
 )
 
+var _ protocol.User = userModel{}
+
 type userModel struct {
 	id        uuid.UUID
 	createdAt time.Time

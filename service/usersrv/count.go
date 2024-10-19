@@ -6,7 +6,7 @@ import (
 )
 
 func (m *Service) Count(ctx context.Context) (int64, error) {
-	count, err := m.queries.Count(ctx, m.pool)
+	count, err := m.queries.Count(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("count users: %w", err)
 	}
