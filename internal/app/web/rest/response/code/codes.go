@@ -12,4 +12,5 @@ const (
 
 	RequiredUserID Code = 1021
 	InvalidUserID  Code = 1022
+	NotFoundUser   Code = 1023
 )

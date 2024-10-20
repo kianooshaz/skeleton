@@ -5,5 +5,6 @@ import (
 )
 
 type Handler struct {
-	User protocol.ServiceUser
+	UserService     protocol.ServiceUser
+	UsernameService protocol.ServiceUsername
 }
