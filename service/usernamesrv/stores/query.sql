@@ -22,6 +22,10 @@ WHERE user_id = $1 AND deleted_at IS NULL;
 SELECT id, username_value, user_id, is_primary, status, created_at, updated_at FROM usernames
 WHERE username_value = $1 AND deleted_at IS NULL;
 
+-- name: Get :one
+SELECT id, username_value, user_id, is_primary, status, created_at, updated_at FROM usernames
+WHERE id = $1 AND deleted_at IS NULL;
+
 -- name: CountByUserID :one
 SELECT COUNT(id) FROM usernames
 WHERE user_id = $1 AND deleted_at IS NULL;

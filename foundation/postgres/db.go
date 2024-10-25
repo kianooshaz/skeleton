@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,12 +18,20 @@ type Config struct {
 	Password string `yaml:"password" env:"ROSTAM_POSTGRES_PASSWORD" validate:"required"`
 }
 
+type DB interface {
+	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
+	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
+	QueryRow(context.Context, string, ...interface{}) pgx.Row
+	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
+	Close()
+}
+
 var (
 	pool     *pgxpool.Pool
 	poolOnce sync.Once
 )
 
-func NewPool(ctx context.Context, cfg *Config) (*pgxpool.Pool, error) {
+func New(ctx context.Context, cfg *Config) (DB, error) {
 	var err error
 
 	poolOnce.Do(func() {

@@ -24,13 +24,13 @@ func Serve(configPath string) error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	pgPool, err := postgres.NewPool(ctx, cfg.Postgres)
+	db, err := postgres.New(ctx, cfg.Postgres)
 	if err != nil {
 		return fmt.Errorf("creating postgres pool: %w", err)
 	}
 
-	userService := usersrv.New(pgPool)
-	usernameService := usernamesrv.New(cfg.UsernameService, pgPool)
+	userService := usersrv.New(db)
+	usernameService := usernamesrv.New(cfg.UsernameService, db)
 
 	server := rest.New(cfg.Rest, &handler.Handler{
 		UserService:     userService,
@@ -58,7 +58,7 @@ func Serve(configPath string) error {
 			fmt.Println("failed to shutdown server", "error", err)
 		}
 
-		pgPool.Close()
+		db.Close()
 
 		stop()
 	}

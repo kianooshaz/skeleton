@@ -6,38 +6,36 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/kianooshaz/skeleton/protocol"
-	"github.com/kianooshaz/skeleton/protocol/derror"
-	"github.com/kianooshaz/skeleton/protocol/status"
+	"github.com/kianooshaz/skeleton/foundation/status"
 	"github.com/kianooshaz/skeleton/service/usernamesrv/stores/usernamedb"
 )
 
-func (s *Service) Add(ctx context.Context, userID protocol.ID, value string) (protocol.Username, error) {
+func (s *Service) Add(ctx context.Context, userID uuid.UUID, value string) (Username, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
-		return usernameModel{}, fmt.Errorf("new uuid: %w", err)
+		return Username{}, fmt.Errorf("new uuid: %w", err)
 	}
 
 	if len(value) < int(s.config.MinLength) || len(value) > int(s.config.MaxLength) {
-		return usernameModel{}, derror.InvalidRequest
+		return Username{}, ErrInvalidRequest
 	}
 
 	countValue, err := s.queries.CountByUsername(ctx, value)
 	if err != nil {
-		return usernameModel{}, fmt.Errorf("get count by username: %w", err)
+		return Username{}, fmt.Errorf("get count by username: %w", err)
 	}
 
 	if countValue > 0 {
-		return usernameModel{}, derror.Duplicate
+		return Username{}, ErrDuplicate
 	}
 
 	countForUser, err := s.queries.CountByUserID(ctx, uuid.UUID(userID))
 	if err != nil {
-		return usernameModel{}, fmt.Errorf("get count by user id: %w", err)
+		return Username{}, fmt.Errorf("get count by user id: %w", err)
 	}
 
 	if countForUser > int64(s.config.MaxPerUser) {
-		return usernameModel{}, derror.InvalidRequest
+		return Username{}, ErrInvalidRequest
 	}
 
 	username, err := s.queries.Create(ctx, usernamedb.CreateParams{
@@ -45,18 +43,18 @@ func (s *Service) Add(ctx context.Context, userID protocol.ID, value string) (pr
 		UsernameValue: value,
 		UserID:        uuid.UUID(userID),
 		IsPrimary:     countForUser == 0,
-		Status:        int64(status.Registered),
+		Status:        int64(status.Unset),
 	})
 	if err != nil {
-		return usernameModel{}, fmt.Errorf("create username on db: %w", err)
+		return Username{}, fmt.Errorf("create username on db: %w", err)
 	}
 
-	return usernameModel{
-		id:      username.ID,
-		value:   username.UsernameValue,
-		userID:  username.UserID,
-		primary: username.IsPrimary,
-		status:  status.Status(username.Status),
+	return Username{
+		ID:      username.ID,
+		Value:   username.UsernameValue,
+		UserID:  username.UserID,
+		Primary: username.IsPrimary,
+		Status:  status.Status(username.Status),
 	}, nil
 }
 

@@ -86,6 +86,36 @@ func (q *Queries) Delete(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const get = `-- name: Get :one
+SELECT id, username_value, user_id, is_primary, status, created_at, updated_at FROM usernames
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+type GetRow struct {
+	ID            uuid.UUID
+	UsernameValue string
+	UserID        uuid.UUID
+	IsPrimary     bool
+	Status        int64
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+}
+
+func (q *Queries) Get(ctx context.Context, id uuid.UUID) (GetRow, error) {
+	row := q.db.QueryRow(ctx, get, id)
+	var i GetRow
+	err := row.Scan(
+		&i.ID,
+		&i.UsernameValue,
+		&i.UserID,
+		&i.IsPrimary,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getByUsername = `-- name: GetByUsername :one
 SELECT id, username_value, user_id, is_primary, status, created_at, updated_at FROM usernames
 WHERE username_value = $1 AND deleted_at IS NULL

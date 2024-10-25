@@ -8,8 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest/response"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest/response/code"
-	"github.com/kianooshaz/skeleton/protocol"
-	"github.com/kianooshaz/skeleton/protocol/derror"
+	"github.com/kianooshaz/skeleton/service/usersrv"
 	"github.com/labstack/echo/v4"
 )
 
@@ -21,8 +20,8 @@ func (h *Handler) NewUser(c echo.Context) error {
 	}
 
 	data := response.User{
-		ID:        user.ID().String(),
-		CreatedAt: user.CreatedAt().Unix(),
+		ID:        user.ID.String(),
+		CreatedAt: user.CreatedAt.Unix(),
 	}
 
 	return c.JSON(http.StatusOK, response.New(data, nil))
@@ -40,9 +39,9 @@ func (h *Handler) GetUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.NewError(code.InvalidUserID))
 	}
 
-	user, err := h.UserService.Get(c.Request().Context(), protocol.ID(id))
+	user, err := h.UserService.Get(c.Request().Context(), uuid.UUID(id))
 	if err != nil {
-		if errors.Is(err, derror.NotFound) {
+		if errors.Is(err, usersrv.ErrNotFound) {
 			return c.JSON(http.StatusNotFound, response.NewError(code.NotFoundUser))
 		}
 		slog.Error("error on get user", "error", err, "user_id", id)

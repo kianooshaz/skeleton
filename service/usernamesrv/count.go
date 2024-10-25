@@ -3,10 +3,10 @@ package usernamesrv
 import (
 	"context"
 
-	"github.com/kianooshaz/skeleton/protocol"
+	"github.com/google/uuid"
 )
 
 // Count implements protocol.ServiceUsername.
-func (s *Service) Count(ctx context.Context, userID protocol.ID) (int64, error) {
+func (s *Service) Count(ctx context.Context, userID uuid.UUID) (int64, error) {
 	panic("unimplemented")
 }

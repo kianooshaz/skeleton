@@ -2,8 +2,7 @@ package usernamesrv
 
 import (
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kianooshaz/skeleton/protocol"
+	"github.com/kianooshaz/skeleton/foundation/postgres"
 	"github.com/kianooshaz/skeleton/service/usernamesrv/stores/usernamedb"
 )
 
@@ -17,21 +16,24 @@ type (
 
 	Service struct {
 		config  Config
+		db      postgres.DB
 		queries *usernamedb.Queries
 	}
 )
 
-func New(config Config, pool *pgxpool.Pool) protocol.ServiceUsername {
+func New(config Config, db postgres.DB) *Service {
 	return &Service{
 		config:  config,
-		queries: usernamedb.New(pool),
+		db:      db,
+		queries: usernamedb.New(db),
 	}
 }
 
 // NewTx implements protocol.ServiceUser.
-func (m *Service) NewWithTx(tx pgx.Tx) protocol.ServiceUsername {
+func (m *Service) NewWithTx(tx pgx.Tx) *Service {
 	return &Service{
 		config:  m.config,
+		db:      m.db,
 		queries: usernamedb.New(tx),
 	}
 }
