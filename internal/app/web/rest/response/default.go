@@ -1,6 +1,6 @@
 package response
 
-import "github.com/kianooshaz/skeleton/internal/app/web/rest/response/code"
+import "github.com/kianooshaz/skeleton/foundation/code"
 
 func New[T any](data T, meta *Meta) Default[T] {
 	return Default[T]{

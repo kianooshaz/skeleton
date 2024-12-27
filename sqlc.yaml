@@ -1,13 +1,13 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "service/usersrv/stores/query.sql"
-    schema: "service/usersrv/stores/schema.sql"
+    queries: "modules/user/user/service/stores/query.sql"
+    schema: "modules/user/user/service/stores/schema.sql"
     gen:
       go:
         emit_methods_with_db_argument: false
-        package: "userdb"
-        out: "service/usersrv/stores/userdb"
+        package: "db"
+        out: "modules/user/user/service/stores/db"
         sql_package: "pgx/v5"
         overrides:
           - db_type: "uuid"
@@ -15,13 +15,13 @@ sql:
               import: "github.com/google/uuid"
               type: "UUID"
   - engine: "postgresql"
-    queries: "service/usernamesrv/stores/query.sql"
-    schema: "service/usernamesrv/stores/schema.sql"
+    queries: "modules/user/username/service/stores/query.sql"
+    schema: "modules/user/username/service/stores/schema.sql"
     gen:
       go:
         emit_methods_with_db_argument: false
-        package: "usernamedb"
-        out: "service/usernamesrv/stores/usernamedb"
+        package: "db"
+        out: "modules/user/username/service/stores/db"
         sql_package: "pgx/v5"
         overrides:
           - db_type: "uuid"

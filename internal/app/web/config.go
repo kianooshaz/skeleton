@@ -12,15 +12,15 @@ import (
 	"github.com/golobby/config/v3/pkg/feeder"
 	"github.com/kianooshaz/skeleton/foundation/postgres"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest"
-	"github.com/kianooshaz/skeleton/service/usernamesrv"
+	usernameService "github.com/kianooshaz/skeleton/modules/user/username/service"
 )
 
 type Config struct {
-	Version         string             `yaml:"version" env:"SKELETON_VERSION" validate:"required"`
-	ShutdownTimeout time.Duration      `yaml:"shutdown_timeout"`
-	Rest            *rest.Config       `yaml:"rest" validate:"required"`
-	Postgres        *postgres.Config   `yaml:"postgres" validate:"required"`
-	UsernameService usernamesrv.Config `yaml:"username_service" validate:"required"`
+	Version         string                 `yaml:"version" env:"SKELETON_VERSION" validate:"required"`
+	ShutdownTimeout time.Duration          `yaml:"shutdown_timeout"`
+	Rest            *rest.Config           `yaml:"rest" validate:"required"`
+	Postgres        *postgres.Config       `yaml:"postgres" validate:"required"`
+	UsernameService usernameService.Config `yaml:"username_service" validate:"required"`
 }
 
 func newConfig(configPath string) (*Config, error) {

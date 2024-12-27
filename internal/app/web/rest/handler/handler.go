@@ -1,11 +1,9 @@
 package handler
 
 import (
-	"github.com/kianooshaz/skeleton/service/usernamesrv"
-	"github.com/kianooshaz/skeleton/service/usersrv"
+	userProtocol "github.com/kianooshaz/skeleton/modules/user/user/protocol"
 )
 
 type Handler struct {
-	UserService     *usersrv.Service
-	UsernameService *usernamesrv.Service
+	UserService userProtocol.UserService
 }

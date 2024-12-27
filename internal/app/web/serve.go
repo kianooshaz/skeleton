@@ -10,8 +10,8 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/postgres"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest/handler"
-	"github.com/kianooshaz/skeleton/service/usernamesrv"
-	"github.com/kianooshaz/skeleton/service/usersrv"
+	userService "github.com/kianooshaz/skeleton/modules/user/user/service"
+	usernameService "github.com/kianooshaz/skeleton/modules/user/username/service"
 )
 
 func Serve(configPath string) error {
@@ -29,8 +29,8 @@ func Serve(configPath string) error {
 		return fmt.Errorf("creating postgres pool: %w", err)
 	}
 
-	userService := usersrv.New(db)
-	usernameService := usernamesrv.New(cfg.UsernameService, db)
+	userService := userService.New(db)
+	usernameService := usernameService.New(cfg.UsernameService, db)
 
 	server := rest.New(cfg.Rest, &handler.Handler{
 		UserService:     userService,

@@ -1,6 +1,6 @@
 package response
 
-import "github.com/kianooshaz/skeleton/internal/app/web/rest/response/code"
+import "github.com/kianooshaz/skeleton/foundation/code"
 
 func NewError(c code.Code) *Error {
 	return &Error{

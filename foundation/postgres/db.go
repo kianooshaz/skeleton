@@ -15,7 +15,7 @@ type Config struct {
 	Host     string `yaml:"host" validate:"required"`
 	Port     int    `yaml:"port" validate:"required"`
 	User     string `yaml:"user" validate:"required"`
-	Password string `yaml:"password" env:"ROSTAM_POSTGRES_PASSWORD" validate:"required"`
+	Password string `yaml:"password" validate:"required"`
 }
 
 type DB interface {
