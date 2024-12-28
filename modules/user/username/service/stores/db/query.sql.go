@@ -12,25 +12,37 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const countByUserID = `-- name: CountByUserID :one
+const count = `-- name: Count :one
 SELECT COUNT(id) FROM usernames
-WHERE user_id = $1 AND deleted_at IS NULL
+WHERE id = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) CountByUserID(ctx context.Context, userID uuid.UUID) (int64, error) {
-	row := q.db.QueryRow(ctx, countByUserID, userID)
+func (q *Queries) Count(ctx context.Context, id string) (int64, error) {
+	row := q.db.QueryRow(ctx, count, id)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const countByUsername = `-- name: CountByUsername :one
+const countByUser = `-- name: CountByUser :one
 SELECT COUNT(id) FROM usernames
-WHERE username_value = $1 AND deleted_at IS NULL
+WHERE user_id = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) CountByUsername(ctx context.Context, usernameValue string) (int64, error) {
-	row := q.db.QueryRow(ctx, countByUsername, usernameValue)
+func (q *Queries) CountByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countByUser, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countByUserAndOrganization = `-- name: CountByUserAndOrganization :one
+SELECT COUNT(id) FROM usernames
+WHERE user_id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) CountByUserAndOrganization(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countByUserAndOrganization, userID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -38,35 +50,32 @@ func (q *Queries) CountByUsername(ctx context.Context, usernameValue string) (in
 
 const create = `-- name: Create :one
 INSERT INTO usernames (
-    id, username_value, user_id, is_primary, status, created_at, updated_at, deleted_at
+    id, user_id, organization_id, status, created_at, updated_at, deleted_at
 ) VALUES (
-             $1, $2, $3, $4, $5, NOW(), NOW(), NULL
-         ) RETURNING id, username_value, user_id, status, is_primary, created_at, updated_at, deleted_at
+             $1, $2, $3, $4, NOW(), NOW(), NULL
+         ) RETURNING id, user_id, organization_id, status, created_at, updated_at, deleted_at
 `
 
 type CreateParams struct {
-	ID            uuid.UUID
-	UsernameValue string
-	UserID        uuid.UUID
-	IsPrimary     bool
-	Status        int64
+	ID             string
+	UserID         uuid.UUID
+	OrganizationID uuid.UUID
+	Status         int64
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (Username, error) {
 	row := q.db.QueryRow(ctx, create,
 		arg.ID,
-		arg.UsernameValue,
 		arg.UserID,
-		arg.IsPrimary,
+		arg.OrganizationID,
 		arg.Status,
 	)
 	var i Username
 	err := row.Scan(
 		&i.ID,
-		&i.UsernameValue,
 		&i.UserID,
+		&i.OrganizationID,
 		&i.Status,
-		&i.IsPrimary,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -81,34 +90,32 @@ SET
 WHERE id = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) Delete(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) Delete(ctx context.Context, id string) error {
 	_, err := q.db.Exec(ctx, delete, id)
 	return err
 }
 
 const get = `-- name: Get :one
-SELECT id, username_value, user_id, is_primary, status, created_at, updated_at FROM usernames
+SELECT id, user_id, organization_id, status, created_at, updated_at FROM usernames
 WHERE id = $1 AND deleted_at IS NULL
 `
 
 type GetRow struct {
-	ID            uuid.UUID
-	UsernameValue string
-	UserID        uuid.UUID
-	IsPrimary     bool
-	Status        int64
-	CreatedAt     pgtype.Timestamptz
-	UpdatedAt     pgtype.Timestamptz
+	ID             string
+	UserID         uuid.UUID
+	OrganizationID uuid.UUID
+	Status         int64
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
 }
 
-func (q *Queries) Get(ctx context.Context, id uuid.UUID) (GetRow, error) {
+func (q *Queries) Get(ctx context.Context, id string) (GetRow, error) {
 	row := q.db.QueryRow(ctx, get, id)
 	var i GetRow
 	err := row.Scan(
 		&i.ID,
-		&i.UsernameValue,
 		&i.UserID,
-		&i.IsPrimary,
+		&i.OrganizationID,
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -116,65 +123,79 @@ func (q *Queries) Get(ctx context.Context, id uuid.UUID) (GetRow, error) {
 	return i, err
 }
 
-const getByUsername = `-- name: GetByUsername :one
-SELECT id, username_value, user_id, is_primary, status, created_at, updated_at FROM usernames
-WHERE username_value = $1 AND deleted_at IS NULL
-`
-
-type GetByUsernameRow struct {
-	ID            uuid.UUID
-	UsernameValue string
-	UserID        uuid.UUID
-	IsPrimary     bool
-	Status        int64
-	CreatedAt     pgtype.Timestamptz
-	UpdatedAt     pgtype.Timestamptz
-}
-
-func (q *Queries) GetByUsername(ctx context.Context, usernameValue string) (GetByUsernameRow, error) {
-	row := q.db.QueryRow(ctx, getByUsername, usernameValue)
-	var i GetByUsernameRow
-	err := row.Scan(
-		&i.ID,
-		&i.UsernameValue,
-		&i.UserID,
-		&i.IsPrimary,
-		&i.Status,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const list = `-- name: List :many
-SELECT id, username_value, user_id, is_primary, status, created_at, updated_at FROM usernames
+const listByUser = `-- name: ListByUser :many
+SELECT id, user_id, organization_id, status, created_at, updated_at FROM usernames
 WHERE user_id = $1 AND deleted_at IS NULL
 `
 
-type ListRow struct {
-	ID            uuid.UUID
-	UsernameValue string
-	UserID        uuid.UUID
-	IsPrimary     bool
-	Status        int64
-	CreatedAt     pgtype.Timestamptz
-	UpdatedAt     pgtype.Timestamptz
+type ListByUserRow struct {
+	ID             string
+	UserID         uuid.UUID
+	OrganizationID uuid.UUID
+	Status         int64
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
 }
 
-func (q *Queries) List(ctx context.Context, userID uuid.UUID) ([]ListRow, error) {
-	rows, err := q.db.Query(ctx, list, userID)
+func (q *Queries) ListByUser(ctx context.Context, userID uuid.UUID) ([]ListByUserRow, error) {
+	rows, err := q.db.Query(ctx, listByUser, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListRow
+	var items []ListByUserRow
 	for rows.Next() {
-		var i ListRow
+		var i ListByUserRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.UsernameValue,
 			&i.UserID,
-			&i.IsPrimary,
+			&i.OrganizationID,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listByUserAndOrganization = `-- name: ListByUserAndOrganization :many
+SELECT id, user_id, organization_id, status, created_at, updated_at FROM usernames
+WHERE user_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+`
+
+type ListByUserAndOrganizationParams struct {
+	UserID         uuid.UUID
+	OrganizationID uuid.UUID
+}
+
+type ListByUserAndOrganizationRow struct {
+	ID             string
+	UserID         uuid.UUID
+	OrganizationID uuid.UUID
+	Status         int64
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+func (q *Queries) ListByUserAndOrganization(ctx context.Context, arg ListByUserAndOrganizationParams) ([]ListByUserAndOrganizationRow, error) {
+	rows, err := q.db.Query(ctx, listByUserAndOrganization, arg.UserID, arg.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListByUserAndOrganizationRow
+	for rows.Next() {
+		var i ListByUserAndOrganizationRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.OrganizationID,
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -192,19 +213,26 @@ func (q *Queries) List(ctx context.Context, userID uuid.UUID) ([]ListRow, error)
 const update = `-- name: Update :exec
 UPDATE usernames
 SET 
-    is_primary = $1,
-    status = $2,
+    user_id = $2,
+    organization_id = $3,
+    status = $4,
     updated_at = NOW()
-WHERE id = $3 AND deleted_at IS NULL
+WHERE id = $1 AND deleted_at IS NULL
 `
 
 type UpdateParams struct {
-	IsPrimary bool
-	Status    int64
-	ID        uuid.UUID
+	ID             string
+	UserID         uuid.UUID
+	OrganizationID uuid.UUID
+	Status         int64
 }
 
 func (q *Queries) Update(ctx context.Context, arg UpdateParams) error {
-	_, err := q.db.Exec(ctx, update, arg.IsPrimary, arg.Status, arg.ID)
+	_, err := q.db.Exec(ctx, update,
+		arg.ID,
+		arg.UserID,
+		arg.OrganizationID,
+		arg.Status,
+	)
 	return err
 }

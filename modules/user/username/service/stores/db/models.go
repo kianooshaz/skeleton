@@ -10,12 +10,11 @@ import (
 )
 
 type Username struct {
-	ID            uuid.UUID
-	UsernameValue string
-	UserID        uuid.UUID
-	Status        int64
-	IsPrimary     bool
-	CreatedAt     pgtype.Timestamptz
-	UpdatedAt     pgtype.Timestamptz
-	DeletedAt     pgtype.Timestamptz
+	ID             string
+	UserID         uuid.UUID
+	OrganizationID uuid.UUID
+	Status         int64
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+	DeletedAt      pgtype.Timestamptz
 }

@@ -4,7 +4,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/kianooshaz/skeleton/foundation/log"
 	"github.com/kianooshaz/skeleton/foundation/postgres"
-	"github.com/kianooshaz/skeleton/modules/user/user/service/stores/db"
+	"github.com/kianooshaz/skeleton/modules/user/userid/protocol"
+	"github.com/kianooshaz/skeleton/modules/user/userid/service/stores/db"
 )
 
 type (
@@ -15,7 +16,7 @@ type (
 	}
 )
 
-func New(logger log.Logger, pdb postgres.DB) *UserService {
+func New(logger log.Logger, pdb postgres.DB) protocol.UserService {
 	return &UserService{
 		logger: logger,
 		_pdb:   pdb,
@@ -25,7 +26,7 @@ func New(logger log.Logger, pdb postgres.DB) *UserService {
 }
 
 // NewTx implements protocol.ServiceUser.
-func (m *UserService) NewWithTx(tx pgx.Tx) *UserService {
+func (m *UserService) NewWithTx(tx pgx.Tx) protocol.UserService {
 	return &UserService{
 		logger: m.logger,
 		_pdb:   m._pdb,

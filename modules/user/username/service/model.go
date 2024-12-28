@@ -4,20 +4,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kianooshaz/skeleton/foundation/status"
+	"github.com/kianooshaz/skeleton/foundation/stat"
 )
 
 type Username struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	Value     string
-	Status    status.Status
-	Primary   bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID             string
+	UserID         uuid.UUID
+	OrganizationID uuid.UUID
+	Status         stat.Status
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
-func (u Username) GetID() uuid.UUID {
+func (u Username) GetID() string {
 	return u.ID
 }
 
@@ -25,16 +24,12 @@ func (u Username) GetUserID() uuid.UUID {
 	return u.UserID
 }
 
-func (u Username) GetValue() string {
-	return u.Value
+func (u Username) GetOrganizationID() uuid.UUID {
+	return u.OrganizationID
 }
 
-func (u Username) GetStatus() status.Status {
+func (u Username) GetStatus() stat.Status {
 	return u.Status
-}
-
-func (u Username) IsPrimary() bool {
-	return u.Primary
 }
 
 func (u Username) GetCreatedAt() time.Time {

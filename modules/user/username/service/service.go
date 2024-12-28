@@ -4,15 +4,17 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/kianooshaz/skeleton/foundation/log"
 	"github.com/kianooshaz/skeleton/foundation/postgres"
+	"github.com/kianooshaz/skeleton/modules/user/username/protocol"
 	"github.com/kianooshaz/skeleton/modules/user/username/service/stores/db"
 )
 
 type (
 	Config struct {
-		MaxPerUser      uint   `yaml:"max_per_user"`
-		MinLength       uint   `yaml:"min_length"`
-		MaxLength       uint   `yaml:"max_length"`
-		AllowCharacters string `yaml:"allow_characters"`
+		MaxPerUser         uint   `yaml:"max_per_user"`
+		MaxPerOrganization uint   `yaml:"max_per_user"`
+		MinLength          uint   `yaml:"min_length"`
+		MaxLength          uint   `yaml:"max_length"`
+		AllowCharacters    string `yaml:"allow_characters"`
 	}
 
 	Service struct {
@@ -23,7 +25,7 @@ type (
 	}
 )
 
-func New(config Config, logger log.Logger, pdb postgres.DB) *Service {
+func New(config Config, logger log.Logger, pdb postgres.DB) protocol.UsernameService {
 	return &Service{
 		config: config,
 		logger: logger,
@@ -33,10 +35,11 @@ func New(config Config, logger log.Logger, pdb postgres.DB) *Service {
 }
 
 // NewTx implements protocol.ServiceUser.
-func (m *Service) NewWithTx(tx pgx.Tx) *Service {
+func (s *Service) NewWithTx(tx pgx.Tx) protocol.UsernameService {
 	return &Service{
-		config: m.config,
-		_pdb:   m._pdb,
+		config: s.config,
+		logger: s.logger,
+		_pdb:   s._pdb,
 		db:     db.New(tx),
 	}
 }

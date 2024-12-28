@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/order"
-	"github.com/kianooshaz/skeleton/modules/user/user/protocol"
+	"github.com/kianooshaz/skeleton/modules/user/userid/protocol"
 )
 
 func (s *UserService) Create(ctx context.Context) (protocol.User, error) {

@@ -1,10 +1,41 @@
-package status
+package stat
 
 // Status represents a set of status flags, using a uint64 as the underlying type.
 type Status uint
 
 // Unset is the default value for Status, representing no status.
+
 const Unset Status = 0
+
+const (
+	Registered Status = 1
+
+	Pending Status = 1 << iota
+
+	Inactive
+
+	Locked
+
+	Blocked
+
+	Suspended
+
+	Hidden
+
+	UnderReview
+
+	Flagged
+
+	Verified
+
+	ManuallyAdded
+
+	ManuallyVerified
+
+	Primary
+
+	Reserved
+)
 
 // Has checks if a specific status (ss) is present in the current status.
 func (s *Status) Has(ss Status) bool {

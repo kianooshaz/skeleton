@@ -29,4 +29,4 @@ swag: .now .which-swag
 	swag init --pd -g "../http.go"  --o "./docs/api/" --ot "go,json" --dir "./internal/transport/server/http/handler"
 
 sqlc: .now .which-sqlc
-	sqlc generate
+	sqlc -f build/sqlc.yaml generate

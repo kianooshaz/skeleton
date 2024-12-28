@@ -1,38 +1,44 @@
 -- name: Create :one
 INSERT INTO usernames (
-    id, username_value, user_id, is_primary, status, created_at, updated_at, deleted_at
+    id, user_id, organization_id, status, created_at, updated_at, deleted_at
 ) VALUES (
-             $1, $2, $3, $4, $5, NOW(), NOW(), NULL
-         ) RETURNING id, username_value, user_id, status, is_primary, created_at, updated_at, deleted_at;
+             $1, $2, $3, $4, NOW(), NOW(), NULL
+         ) RETURNING id, user_id, organization_id, status, created_at, updated_at, deleted_at;
 
 
 -- name: Update :exec
 UPDATE usernames
 SET 
-    is_primary = $1,
-    status = $2,
+    user_id = $2,
+    organization_id = $3,
+    status = $4,
     updated_at = NOW()
-WHERE id = $3 AND deleted_at IS NULL;
-
--- name: List :many
-SELECT id, username_value, user_id, is_primary, status, created_at, updated_at FROM usernames
-WHERE user_id = $1 AND deleted_at IS NULL;
-
--- name: GetByUsername :one
-SELECT id, username_value, user_id, is_primary, status, created_at, updated_at FROM usernames
-WHERE username_value = $1 AND deleted_at IS NULL;
-
--- name: Get :one
-SELECT id, username_value, user_id, is_primary, status, created_at, updated_at FROM usernames
 WHERE id = $1 AND deleted_at IS NULL;
 
--- name: CountByUserID :one
+-- name: Get :one
+SELECT id, user_id, organization_id, status, created_at, updated_at FROM usernames
+WHERE id = $1 AND deleted_at IS NULL;
+
+-- name: ListByUser :many
+SELECT id, user_id, organization_id, status, created_at, updated_at FROM usernames
+WHERE user_id = $1 AND deleted_at IS NULL;
+
+-- name: ListByUserAndOrganization :many
+SELECT id, user_id, organization_id, status, created_at, updated_at FROM usernames
+WHERE user_id = $1 AND organization_id = $2 AND deleted_at IS NULL;
+
+-- name: CountByUser :one
 SELECT COUNT(id) FROM usernames
 WHERE user_id = $1 AND deleted_at IS NULL;
 
--- name: CountByUsername :one
+
+-- name: CountByUserAndOrganization :one
 SELECT COUNT(id) FROM usernames
-WHERE username_value = $1 AND deleted_at IS NULL;
+WHERE user_id = $1 AND deleted_at IS NULL;
+
+-- name: Count :one
+SELECT COUNT(id) FROM usernames
+WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: Delete :exec
 UPDATE usernames
