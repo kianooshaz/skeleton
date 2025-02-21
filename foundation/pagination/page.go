@@ -1,7 +1,9 @@
+// Package pagination provides utilities for managing pagination logic.
 package pagination
 
 import "fmt"
 
+// Page holds pagination details: page number and rows per page.
 type Page struct {
 	PageNumber int `json:"page_number" bson:"page_number"`
 	PageRows   int `json:"page_rows" bson:"page_rows"`

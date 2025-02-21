@@ -6,6 +6,7 @@ package order
 
 type Direction string
 
+// Constants for sorting directions
 const (
 	// ASC represents ascending order.
 	ASC Direction = "ascending"
