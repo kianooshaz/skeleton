@@ -1,3 +1,4 @@
+// Package pagination provides utilities for managing pagination logic.
 package pagination
 
 import (
