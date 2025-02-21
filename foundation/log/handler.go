@@ -13,6 +13,9 @@ type config struct {
 
 func Init() {
 	cfg, err := env.ParseAs[config]()
+	if err != nil {
+		slog.Error("failed to parse env", slog.Any("error", err))
+	}
 
 	opts := &slog.HandlerOptions{
 		AddSource: true,
@@ -26,11 +29,7 @@ func Init() {
 		}
 	}
 
-	handler := slog.NewJSONHandler(os.Stdout, opts)
+	handler := &SessionHandler{slog.NewJSONHandler(os.Stdout, opts)}
 
 	slog.SetDefault(slog.New(handler))
-
-	if err != nil {
-		slog.Error("failed to parse env", slog.Any("error", err))
-	}
 }

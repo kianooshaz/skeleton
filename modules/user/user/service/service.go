@@ -17,7 +17,7 @@ type Storage interface {
 	Create(ctx context.Context, user protocol.User) error
 	Get(ctx context.Context, id types.UserID) (protocol.User, error)
 	List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]protocol.User, error)
-	Count(ctx context.Context) (int64, error)
+	Count(ctx context.Context) (int, error)
 }
 
 var Service protocol.UserService = &userService{}

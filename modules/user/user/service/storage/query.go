@@ -102,9 +102,9 @@ const count = `
 		users
 `
 
-func (us *UserStorage) Count(ctx context.Context) (int64, error) {
+func (us *UserStorage) Count(ctx context.Context) (int, error) {
 	row := us.Conn.QueryRowContext(ctx, count)
-	var count int64
+	var count int
 	err := row.Scan(&count)
 	return count, err
 }

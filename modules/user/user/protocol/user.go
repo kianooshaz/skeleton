@@ -23,13 +23,8 @@ type ListUserRequest struct {
 	order.OrderBy
 }
 
-type ListUserResponse struct {
-	Users []User `json:"users" bson:"users"`
-	Total int64  `json:"total" bson:"total"`
-}
-
 type UserService interface {
 	Create(ctx context.Context) (User, error)
 	Get(ctx context.Context, req GetUserRequest) (User, error)
-	List(ctx context.Context, req ListUserRequest) (ListUserResponse, error)
+	List(ctx context.Context, req ListUserRequest) (pagination.Response[User], error)
 }

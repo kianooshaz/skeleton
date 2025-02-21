@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kianooshaz/skeleton/foundation/derror"
+	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/types"
 	"github.com/kianooshaz/skeleton/modules/user/user/protocol"
 )
@@ -50,27 +51,20 @@ func (s *userService) Get(ctx context.Context, req protocol.GetUserRequest) (pro
 
 }
 
-func (s *userService) List(ctx context.Context, req protocol.ListUserRequest) (protocol.ListUserResponse, error) {
-	res := protocol.ListUserResponse{
-		Users: make([]protocol.User, 0),
-	}
-
+func (s *userService) List(ctx context.Context, req protocol.ListUserRequest) (pagination.Response[protocol.User], error) {
 	users, err := s.storage.List(ctx, req.Page, req.OrderBy)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error at listing users from database", slog.Any("error", err))
 
-		return res, derror.ErrInternalSystem
+		return pagination.Response[protocol.User]{}, derror.ErrInternalSystem
 	}
 
-	count, err := s.storage.Count(ctx)
+	totalCount, err := s.storage.Count(ctx)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error at counting users from database", slog.Any("error", err))
 
-		return res, derror.ErrInternalSystem
+		return pagination.Response[protocol.User]{}, derror.ErrInternalSystem
 	}
 
-	res.Users = users
-	res.Total = count
-
-	return res, nil
+	return pagination.NewResponse(req.Page, totalCount, users), nil
 }
