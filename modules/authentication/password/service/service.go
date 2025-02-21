@@ -9,9 +9,10 @@ import (
 
 type (
 	Config struct {
-		MinLength       uint   `yaml:"min_length"`
-		AllowCharacters string `yaml:"allow_characters"`
-		Cost            int    `yaml:"cost"`
+		MinLength                 uint   `yaml:"min_length"`
+		AllowCharacters           string `yaml:"allow_characters"`
+		Cost                      int    `yaml:"cost"`
+		CheckPasswordHistoryLimit int32  `yaml:"check_password_history_limit"`
 	}
 
 	PasswordService struct {

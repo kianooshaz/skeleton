@@ -6,10 +6,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// type for hashed password
+type hash string
+
 type Password struct {
 	ID           uuid.UUID
 	UserID       uuid.UUID
-	PasswordHash string
+	PasswordHash hash
 	CreatedAt    time.Time
 }
 
@@ -22,7 +25,7 @@ func (p Password) GetUserID() uuid.UUID {
 }
 
 func (p Password) GetPasswordHash() string {
-	return p.PasswordHash
+	return string(p.PasswordHash)
 }
 
 func (p Password) GetCreatedAt() time.Time {

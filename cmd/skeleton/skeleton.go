@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	configPath := flag.String("config", "config.yaml", "yaml config path file")
+	configPath := flag.String("config", "config.yml", "yaml config path file")
 	flag.Parse()
 
 	if err := web.Serve(*configPath); err != nil {

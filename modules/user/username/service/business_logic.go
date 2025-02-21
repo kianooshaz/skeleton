@@ -8,51 +8,49 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/kianooshaz/skeleton/foundation/derror"
-	"github.com/kianooshaz/skeleton/foundation/stat"
 	"github.com/kianooshaz/skeleton/modules/user/username/protocol"
-	"github.com/kianooshaz/skeleton/modules/user/username/service/stores/db"
 )
 
-func (s *Service) Add(ctx context.Context, userID, OrganizationID uuid.UUID, id string) (protocol.Username, error) {
-	if len(id) < int(s.config.MinLength) || len(id) > int(s.config.MaxLength) {
-		return &Username{}, derror.ErrUsernameLength
+func (s *Service) Add(ctx context.Context, req protocol.AddRequest) error {
+	if len(req.ID) < int(s.config.MinLength) || len(req.ID) > int(s.config.MaxLength) {
+		return derror.ErrUsernameLength
 	}
 
-	if !s.isValidUsername(id) {
-		return &Username{}, derror.ErrUsernameInvalidCharacters
+	if !s.isValidUsername(req.ID) {
+		return derror.ErrUsernameInvalidCharacters
 	}
 
-	countValue, err := s.db.Count(ctx, id)
+	countValue, err := s.storage.Count(ctx, req.ID)
 	if err != nil {
 		s.logger.Error("error at getting count by username", "error", err)
 
-		return &Username{}, derror.ErrInternalSystem
+		return derror.ErrInternalSystem
 	}
 
 	if countValue > 0 {
-		return &Username{}, derror.ErrUsernameAlreadyExists
+		return derror.ErrUsernameAlreadyExists
 	}
 
-	countByUser, err := s.db.CountByUser(ctx, userID)
+	countByUser, err := s.storage.CountByUser(ctx, req.UserID)
 	if err != nil {
 		s.logger.Error("error at getting count by user id", "error", err)
 
-		return &Username{}, derror.ErrInternalSystem
+		return derror.ErrInternalSystem
 	}
 
 	if countByUser > int64(s.config.MaxPerUser) {
-		return &Username{}, derror.ErrUsernameMaxPerUser
+		return derror.ErrUsernameMaxPerUser
 	}
 
-	countByOrganization, err := s.db.CountByUserAndOrganization(ctx, userID)
+	countByOrganization, err := s.db.CountByUserAndOrganization(ctx, req.UserID)
 	if err != nil {
 		s.logger.Error("error at getting count by user and organization", "error", err)
 
-		return &Username{}, derror.ErrInternalSystem
+		return derror.ErrInternalSystem
 	}
 
 	if countByOrganization > int64(s.config.MaxPerOrganization) {
-		return &Username{}, derror.ErrUsernameMaxPerOrganization
+		return derror.ErrUsernameMaxPerOrganization
 	}
 
 	status := stat.Unset
@@ -68,10 +66,10 @@ func (s *Service) Add(ctx context.Context, userID, OrganizationID uuid.UUID, id 
 	if err != nil {
 		s.logger.Error("error at creating username in database", "error", err)
 
-		return &Username{}, derror.ErrInternalSystem
+		return protocol.Username{}, derror.ErrInternalSystem
 	}
 
-	return &Username{
+	return protocol.Username{
 		ID:             row.ID,
 		UserID:         row.UserID,
 		OrganizationID: row.OrganizationID,
@@ -83,14 +81,14 @@ func (s *Service) Get(ctx context.Context, id string) (protocol.Username, error)
 	row, err := s.db.Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &Username{}, derror.ErrUserNotFound
+			return protocol.Username{}, derror.ErrUserNotFound
 		}
 		s.logger.Error("error at getting username from database", "username", id, "error", err)
 
-		return Username{}, derror.ErrInternalSystem
+		return protocol.Username{}, derror.ErrInternalSystem
 	}
 
-	return &Username{
+	return protocol.Username{
 		ID:             row.ID,
 		UserID:         row.UserID,
 		OrganizationID: row.OrganizationID,

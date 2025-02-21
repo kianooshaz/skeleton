@@ -2,10 +2,13 @@ package rest
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
-	"github.com/kianooshaz/skeleton/internal/app/web/rest/handler"
+	"github.com/kianooshaz/skeleton/foundation/config"
+	"github.com/kianooshaz/skeleton/foundation/log"
+	"github.com/kianooshaz/skeleton/internal/app/web/protocol"
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
 )
@@ -18,68 +21,95 @@ type Config struct {
 	IdleTimeout   time.Duration `yaml:"idle_timeout"`
 	BodyLimitSize string        `yaml:"body_limit_size"`
 	CORS          struct {
+		Enable           bool     `yaml:"enable"`
 		AllowedOrigins   []string `yaml:"allowed_origins"`
 		AllowedHeaders   []string `yaml:"allowed_headers"`
 		AllowedMethods   []string `yaml:"allowed_methods"`
 		AllowCredentials bool     `yaml:"allow_credentials"`
 		ExposedHeaders   []string `yaml:"exposed_headers"`
 		MaxAge           int      `yaml:"max_age"`
-	} `yaml:"cors"`
+	}
 	RateLimit struct {
+		Enable   bool          `yaml:"enable"`
 		Rate     float64       `yaml:"rate"`
 		Burst    int           `yaml:"burst"`
 		Duration time.Duration `yaml:"duration"`
-	} `yaml:"rate_limit"`
+	}
 }
 
-type Server struct {
+var Server protocol.WebService
+
+type server struct {
 	core    *echo.Echo
 	address string
-	handler *handler.Handler
 }
 
-func New(cfg *Config, h *handler.Handler) *Server {
+func Init() error {
+	cfg, err := config.Load[Config]("rest_server")
+	if err != nil {
+		return fmt.Errorf("error loading config: %w", err)
+	}
+
 	e := echo.New()
 
+	e.Debug = cfg.Debug
 	e.HideBanner = true
 	e.IPExtractor = echo.ExtractIPFromXFFHeader()
 	e.Server.ReadTimeout = cfg.ReadTimeout
 	e.Server.WriteTimeout = cfg.WriteTimeout
 	e.Server.IdleTimeout = cfg.IdleTimeout
 	e.Server.ErrorLog = slog.NewLogLogger(slog.Default().Handler(), slog.LevelError)
+	e.HTTPErrorHandler = errorResponse
 
 	// Middlewares
 	e.Use(echomw.Recover())
-	e.Use(echomw.CORSWithConfig(echomw.CORSConfig{
-		AllowOrigins:     cfg.CORS.AllowedOrigins,
-		AllowMethods:     cfg.CORS.AllowedMethods,
-		AllowHeaders:     cfg.CORS.AllowedHeaders,
-		AllowCredentials: cfg.CORS.AllowCredentials,
-		ExposeHeaders:    cfg.CORS.ExposedHeaders,
-		MaxAge:           cfg.CORS.MaxAge,
+	e.Use(echomw.RequestIDWithConfig(echomw.RequestIDConfig{
+		RequestIDHandler: func(c echo.Context, id string) {
+			// TODO test this
+			c.Request().WithContext(log.AppendCtx(c.Request().Context(), slog.String("request_id", id)))
+		},
 	}))
 	e.Use(echomw.Secure())
-	e.Use(echomw.BodyLimit(cfg.BodyLimitSize))
 
-	server := &Server{
+	if cfg.CORS.Enable {
+		e.Use(echomw.CORSWithConfig(echomw.CORSConfig{
+			AllowOrigins:     cfg.CORS.AllowedOrigins,
+			AllowMethods:     cfg.CORS.AllowedMethods,
+			AllowHeaders:     cfg.CORS.AllowedHeaders,
+			AllowCredentials: cfg.CORS.AllowCredentials,
+			ExposeHeaders:    cfg.CORS.ExposedHeaders,
+			MaxAge:           cfg.CORS.MaxAge,
+		}))
+	}
+
+	if cfg.RateLimit.Enable {
+		// TODO implement rate limiter with redis and echo
+	}
+
+	if cfg.BodyLimitSize != "" {
+		e.Use(echomw.BodyLimit(cfg.BodyLimitSize))
+	}
+
+	server := &server{
 		core:    e,
 		address: cfg.Address,
-		handler: h,
 	}
 
 	server.registerRoutes()
 
-	return server
+	Server = server
+
+	return nil
 }
 
-func (s *Server) Start() error {
+func (s *server) Start() error {
 	return s.core.Start(s.address)
 }
 
-func (s *Server) Shutdown(ctx context.Context) error {
+func (s *server) Shutdown(ctx context.Context) error {
 	return s.core.Shutdown(ctx)
 }
 
-func (s *Server) Close() error {
+func (s *server) Close() error {
 	return s.core.Close()
 }

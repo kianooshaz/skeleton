@@ -2,47 +2,51 @@ package web
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/kianooshaz/skeleton/foundation/postgres"
+	"github.com/kianooshaz/skeleton/foundation/config"
+	"github.com/kianooshaz/skeleton/foundation/log"
+	"github.com/kianooshaz/skeleton/foundation/storage/postgres"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest"
-	"github.com/kianooshaz/skeleton/internal/app/web/rest/handler"
-	userService "github.com/kianooshaz/skeleton/modules/user/user/service"
-	usernameService "github.com/kianooshaz/skeleton/modules/user/username/service"
 )
+
+type Config struct {
+	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" validate:"required"`
+}
 
 func Serve(configPath string) error {
 	// Handle SIGINT (CTRL+C) gracefully.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	cfg, err := newConfig(configPath)
+	config.Init(configPath)
+
+	cfg, err := config.Load[Config]("app.web")
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	db, err := postgres.New(ctx, cfg.Postgres)
-	if err != nil {
+	log.Init()
+
+	if err := postgres.Init(ctx); err != nil {
 		return fmt.Errorf("creating postgres pool: %w", err)
 	}
 
-	userService := userService.New(db)
-	usernameService := usernameService.New(cfg.UsernameService, db)
-
-	server := rest.New(cfg.Rest, &handler.Handler{
-		UserService:     userService,
-		UsernameService: usernameService,
-	})
+	if err := rest.Init(); err != nil {
+		return fmt.Errorf("creating server: %w", err)
+	}
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
 	errServer := make(chan error, 1)
 	go func() {
-		errServer <- server.Start()
+		errServer <- rest.Server.Start()
 	}()
 
 	select {
@@ -54,11 +58,19 @@ func Serve(configPath string) error {
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 		defer cancel()
 
-		if err := server.Shutdown(ctxWithTimeout); err != nil {
-			fmt.Println("failed to shutdown server", "error", err)
+		if err := rest.Server.Shutdown(ctxWithTimeout); err != nil {
+			errs := errors.Join(fmt.Errorf("shutting down server: %w", err))
+
+			if err := rest.Server.Close(); err != nil {
+				errs = errors.Join(errs, fmt.Errorf("closing server: %w", err))
+			}
+
+			return errs
 		}
 
-		db.Close()
+		if err := postgres.ConnectionPool.Close(); err != nil {
+			return fmt.Errorf("closing postgres pool: %w", err)
+		}
 
 		stop()
 	}

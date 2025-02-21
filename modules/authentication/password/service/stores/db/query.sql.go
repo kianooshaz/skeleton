@@ -82,10 +82,16 @@ FROM
     passwords
 WHERE
     user_id = $1
+ORDER BY created_at DESC LIMIT $2
 `
 
-func (q *Queries) History(ctx context.Context, userID uuid.UUID) ([]Password, error) {
-	rows, err := q.db.Query(ctx, history, userID)
+type HistoryParams struct {
+	UserID uuid.UUID
+	Limit  int32
+}
+
+func (q *Queries) History(ctx context.Context, arg HistoryParams) ([]Password, error) {
+	rows, err := q.db.Query(ctx, history, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

@@ -1,81 +1,51 @@
+// Package order provides functionality for parsing and constructing order-by clauses.
+// Initially designed for SQL, it allows extension to support other storage types
+// by utilizing custom string builder functions.
+
 package order
 
-import (
-	"errors"
-	"strings"
-)
+type Direction string
 
 const (
-	ASC  = "ASC"
-	DESC = "DESC"
+	// ASC represents ascending order.
+	ASC Direction = "ascending"
+	// DESC represents descending order.
+	DESC Direction = "descending"
 )
 
-var directions = map[string]string{
-	ASC:  "ASC",
-	DESC: "DESC",
+// directions maps valid direction strings for validation purposes.
+var directions = map[Direction]bool{
+	ASC:  true,
+	DESC: false,
 }
 
-var ErrUnkownOrder = errors.New("unknown order")
-var ErrUnkownDirection = errors.New("unknown direction")
-
-type By struct {
-	Field     string
-	Direction string
+// OrderBy represents an order-by clause with a field and direction.
+type OrderBy struct {
+	Field     string    `json:"field" bson:"field"`
+	Direction Direction `json:"direction" bson:"direction"`
 }
 
-func NewBy(field string, direction string) By {
-	if _, exists := directions[direction]; !exists {
-		return By{
+// NewBy creates a new By instance with validation on the direction.
+// If the direction is invalid, it defaults to ASC.
+func NewBy(field string, direction Direction) OrderBy {
+	if !directions[direction] {
+		return OrderBy{
 			Field:     field,
 			Direction: ASC,
 		}
 	}
 
-	return By{
+	return OrderBy{
 		Field:     field,
 		Direction: direction,
 	}
 }
 
-func Parse(fieldMappings map[string]string, orderBy string, defaultOrder By) (By, error) {
-	if orderBy == "" {
-		return defaultOrder, nil
-	}
+// StringerFunc defines the function signature for constructing string representations
+// of By instances. This allows customization for different storage backends.
+type StringerFunc func(OrderBy) string
 
-	orderParts := strings.Split(orderBy, ",")
-
-	orgFieldName := strings.TrimSpace(orderParts[0])
-	fieldName, exists := fieldMappings[orgFieldName]
-	if !exists {
-		return By{}, ErrUnkownOrder
-	}
-
-	switch len(orderParts) {
-	case 1:
-		return NewBy(fieldName, ASC), nil
-
-	case 2:
-		direction := strings.TrimSpace(orderParts[1])
-		if _, exists := directions[direction]; !exists {
-			return By{}, ErrUnkownDirection
-		}
-
-		return NewBy(fieldName, direction), nil
-
-	default:
-		return By{}, ErrUnkownOrder
-	}
-}
-
-func MustParse(fieldMappings map[string]string, orderBy string, defaultOrder By) By {
-	by, err := Parse(fieldMappings, orderBy, defaultOrder)
-	if err != nil {
-		panic(err)
-	}
-
-	return by
-}
-
-func (b By) PGX() string {
-	return b.Field + "_" + b.Direction
+// String generates the string representation of a By instance using the provided StringerFunc.
+func (b OrderBy) String(stringer StringerFunc) string {
+	return stringer(b)
 }
