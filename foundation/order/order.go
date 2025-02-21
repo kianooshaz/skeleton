@@ -10,34 +10,26 @@ const (
 	DESC = "DESC"
 )
 
-var directions = map[string]string{
-	ASC:  "ASC",
-	DESC: "DESC",
-}
+var ErrUnknownOrder = errors.New("unknown order")
+var ErrUnknownDirection = errors.New("unknown direction")
 
-var ErrUnkownOrder = errors.New("unknown order")
-var ErrUnkownDirection = errors.New("unknown direction")
-
-type By struct {
+type OrderBy struct {
 	Field     string
 	Direction string
 }
 
-func NewBy(field string, direction string) By {
-	if _, exists := directions[direction]; !exists {
-		return By{
-			Field:     field,
-			Direction: ASC,
-		}
+func NewOrderBy(field string, direction string) OrderBy {
+	if direction != ASC && direction != DESC {
+		direction = ASC // Default to ASC if the direction is invalid
 	}
 
-	return By{
+	return OrderBy{
 		Field:     field,
 		Direction: direction,
 	}
 }
 
-func Parse(fieldMappings map[string]string, orderBy string, defaultOrder By) (By, error) {
+func Parse(fieldMappings map[string]string, orderBy string, defaultOrder OrderBy) (OrderBy, error) {
 	if orderBy == "" {
 		return defaultOrder, nil
 	}
@@ -47,27 +39,27 @@ func Parse(fieldMappings map[string]string, orderBy string, defaultOrder By) (By
 	orgFieldName := strings.TrimSpace(orderParts[0])
 	fieldName, exists := fieldMappings[orgFieldName]
 	if !exists {
-		return By{}, ErrUnkownOrder
+		return OrderBy{}, ErrUnknownOrder
 	}
 
 	switch len(orderParts) {
 	case 1:
-		return NewBy(fieldName, ASC), nil
+		return NewOrderBy(fieldName, ASC), nil
 
 	case 2:
 		direction := strings.TrimSpace(orderParts[1])
-		if _, exists := directions[direction]; !exists {
-			return By{}, ErrUnkownDirection
+		if direction != ASC && direction != DESC {
+			return OrderBy{}, ErrUnknownDirection
 		}
 
-		return NewBy(fieldName, direction), nil
+		return NewOrderBy(fieldName, direction), nil
 
 	default:
-		return By{}, ErrUnkownOrder
+		return OrderBy{}, ErrUnknownOrder
 	}
 }
 
-func MustParse(fieldMappings map[string]string, orderBy string, defaultOrder By) By {
+func MustParse(fieldMappings map[string]string, orderBy string, defaultOrder OrderBy) OrderBy {
 	by, err := Parse(fieldMappings, orderBy, defaultOrder)
 	if err != nil {
 		panic(err)
@@ -76,6 +68,6 @@ func MustParse(fieldMappings map[string]string, orderBy string, defaultOrder By)
 	return by
 }
 
-func (b By) PGX() string {
-	return b.Field + "_" + b.Direction
+func (o OrderBy) PGX() string {
+	return o.Field + "_" + o.Direction
 }

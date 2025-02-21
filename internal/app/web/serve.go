@@ -7,10 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kianooshaz/skeleton/foundation/postgres"
+	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest/handler"
-	userService "github.com/kianooshaz/skeleton/modules/user/user/service"
 	usernameService "github.com/kianooshaz/skeleton/modules/user/username/service"
 )
 
@@ -29,13 +28,9 @@ func Serve(configPath string) error {
 		return fmt.Errorf("creating postgres pool: %w", err)
 	}
 
-	userService := userService.New(db)
-	usernameService := usernameService.New(cfg.UsernameService, db)
+	_ = usernameService.New(cfg.UsernameService, db)
 
-	server := rest.New(cfg.Rest, &handler.Handler{
-		UserService:     userService,
-		UsernameService: usernameService,
-	})
+	server := rest.New(cfg.Rest, &handler.Handler{})
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)

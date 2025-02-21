@@ -10,7 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golobby/config/v3"
 	"github.com/golobby/config/v3/pkg/feeder"
-	"github.com/kianooshaz/skeleton/foundation/postgres"
+	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest"
 	usernameService "github.com/kianooshaz/skeleton/modules/user/username/service"
 )
