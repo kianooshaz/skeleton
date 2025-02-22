@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 
 	"github.com/kianooshaz/skeleton/foundation/database/postgres"
@@ -25,6 +26,7 @@ var Service protocol.UserService = &userService{}
 type userService struct {
 	logger  slog.Logger
 	storage Storage
+	dbConn  *sql.DB
 }
 
 func Init() {
@@ -38,5 +40,6 @@ func Init() {
 		storage: &storage.UserStorage{
 			Conn: postgres.ConnectionPool,
 		},
+		dbConn: postgres.ConnectionPool,
 	}
 }
