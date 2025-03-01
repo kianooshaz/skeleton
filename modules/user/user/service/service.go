@@ -29,7 +29,7 @@ type userService struct {
 	dbConn  *sql.DB
 }
 
-func Init() {
+ func Init() {
 	Service = &userService{
 		logger: *slog.With(
 			slog.Group("package_info",

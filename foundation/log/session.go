@@ -18,5 +18,7 @@ func (h SessionHandler) Handle(ctx context.Context, r slog.Record) error {
 		r.AddAttrs(v)
 	}
 
+	r.Add(slog.String("request_id", session.GetRequestID(ctx)))
+
 	return h.Handler.Handle(ctx, r)
 }
