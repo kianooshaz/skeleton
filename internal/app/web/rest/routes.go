@@ -2,7 +2,7 @@ package rest
 
 import (
 	"github.com/kianooshaz/skeleton/internal/app/web/rest/handler"
-	userService "github.com/kianooshaz/skeleton/modules/user/user/service"
+	userService "github.com/kianooshaz/skeleton/services/user/user/service"
 )
 
 func (s *server) registerRoutes() {

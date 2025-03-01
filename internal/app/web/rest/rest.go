@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/kianooshaz/skeleton/foundation/config"
-	"github.com/kianooshaz/skeleton/foundation/log"
+	"github.com/kianooshaz/skeleton/foundation/session"
 	"github.com/kianooshaz/skeleton/internal/app/web/protocol"
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
@@ -64,10 +64,7 @@ func Init() error {
 	// Middlewares
 	e.Use(echomw.Recover())
 	e.Use(echomw.RequestIDWithConfig(echomw.RequestIDConfig{
-		RequestIDHandler: func(c echo.Context, id string) {
-			// TODO test this
-			c.Request().WithContext(log.AppendCtx(c.Request().Context(), slog.String("request_id", id)))
-		},
+		RequestIDHandler: session.SetRequestIDEcho(),
 	}))
 	e.Use(echomw.Secure())
 

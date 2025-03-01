@@ -4,40 +4,43 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/kianooshaz/skeleton/foundation/config"
 	_ "github.com/lib/pq" // PostgreSQL driver for database/sql
 )
 
 type Config struct {
-	Name     string `yaml:"name" validate:"required"`
-	Host     string `yaml:"host" validate:"required"`
-	Port     int    `yaml:"port" validate:"required"`
-	User     string `yaml:"user" validate:"required"`
-	Password string `yaml:"password" validate:"required"`
-	SSLMode  string `yaml:"ssl_mode" validate:"required"`
+	Name        string        `yaml:"name" validate:"required"`
+	Host        string        `yaml:"host" validate:"required"`
+	Port        int           `yaml:"port" validate:"required"`
+	User        string        `yaml:"user" validate:"required"`
+	Password    string        `yaml:"password" validate:"required"`
+	SSLMode     string        `yaml:"ssl_mode" validate:"required"`
+	PingTimeout time.Duration `yaml:"ping_timeout"`
 }
 
 var ConnectionPool *sql.DB
 
-func Init(ctx context.Context) error {
-	cfg, err := config.Load[Config]("postgres")
+func init() {
+	cfg, err := config.Load[Config]("database.postgres")
 	if err != nil {
-		return fmt.Errorf("unable to parse environment variables: %w", err)
+		panic(fmt.Sprintf("error loading config: %v", err))
 	}
 
 	connectionPool, err := sql.Open("postgres", dsn(cfg))
 	if err != nil {
-		return fmt.Errorf("unable to open database connection: %w", err)
+		panic(fmt.Sprintf("error opening database connection: %v", err))
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.PingTimeout)
+	defer cancel()
+
 	if err = connectionPool.PingContext(ctx); err != nil {
-		return fmt.Errorf("unable to ping database: %w", err)
+		panic(fmt.Sprintf("error pinging database: %v", err))
 	}
 
 	ConnectionPool = connectionPool
-
-	return nil
 }
 
 func dsn(cfg Config) string {
