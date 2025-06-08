@@ -2,11 +2,9 @@ package rest
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
-	"github.com/kianooshaz/skeleton/foundation/config"
 	"github.com/kianooshaz/skeleton/foundation/session"
 	"github.com/kianooshaz/skeleton/internal/app/web/protocol"
 	"github.com/labstack/echo/v4"
@@ -37,19 +35,12 @@ type Config struct {
 	}
 }
 
-var Server protocol.WebService
-
 type server struct {
 	core    *echo.Echo
 	address string
 }
 
-func Init() error {
-	cfg, err := config.Load[Config]("rest_server")
-	if err != nil {
-		return fmt.Errorf("error loading config: %w", err)
-	}
-
+func New(cfg Config) (protocol.WebService, error) {
 	e := echo.New()
 
 	e.Debug = cfg.Debug
@@ -94,9 +85,7 @@ func Init() error {
 
 	server.registerRoutes()
 
-	Server = server
-
-	return nil
+	return server, nil
 }
 
 func (s *server) Start() error {

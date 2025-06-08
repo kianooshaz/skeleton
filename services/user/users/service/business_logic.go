@@ -10,7 +10,7 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/types"
-	up "github.com/kianooshaz/skeleton/services/user/user/protocol"
+	up "github.com/kianooshaz/skeleton/services/user/users/protocol"
 )
 
 func (s *service) Create(ctx context.Context) (up.User, error) {

@@ -11,7 +11,7 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/session"
 	"github.com/kianooshaz/skeleton/foundation/types"
-	"github.com/kianooshaz/skeleton/services/user/user/protocol"
+	"github.com/kianooshaz/skeleton/services/user/users/protocol"
 )
 
 type UserStorage struct {

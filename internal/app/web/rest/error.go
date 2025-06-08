@@ -9,10 +9,16 @@ import (
 )
 
 func errorResponse(err error, c echo.Context) {
-	// TODO: test this function
 	status, ok := DerrorToHTTPStatus[err]
 	if !ok {
+		slog.Error(
+			"error at converting error to http status",
+			slog.Any("error", err),
+			slog.String("package", "rest"),
+		)
+		// If the error is not defined in DerrorToHTTPStatus, we return a 500 Internal Server Error
 		status = http.StatusInternalServerError
+		err = derror.ErrInternalSystem
 	}
 
 	if err := c.JSON(status, echo.Map{

@@ -11,33 +11,29 @@ import (
 
 	"github.com/kianooshaz/skeleton/foundation/config"
 	"github.com/kianooshaz/skeleton/foundation/database/postgres"
-	"github.com/kianooshaz/skeleton/foundation/log"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest"
+
+	_ "github.com/kianooshaz/skeleton/foundation/database/postgres"
+	_ "github.com/kianooshaz/skeleton/foundation/log"
 )
 
 type Config struct {
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" validate:"required"`
+	RestServer      rest.Config   `yaml:"rest_server" validate:"required"`
 }
 
-func Run(configPath string) error {
+func Run() error {
 	// Handle SIGINT (CTRL+C) gracefully.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	config.Init(configPath)
-
-	cfg, err := config.Load[Config]("app.web")
+	cfg, err := config.Load[Config]("app")
 	if err != nil {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	log.Init()
-
-	if err := postgres.Init(ctx); err != nil {
-		return fmt.Errorf("creating postgres pool: %w", err)
-	}
-
-	if err := rest.Init(); err != nil {
+	restServer, err := rest.New(cfg.RestServer)
+	if err != nil {
 		return fmt.Errorf("creating server: %w", err)
 	}
 
@@ -46,7 +42,7 @@ func Run(configPath string) error {
 
 	errServer := make(chan error, 1)
 	go func() {
-		errServer <- rest.Server.Start()
+		errServer <- restServer.Start()
 	}()
 
 	select {
@@ -58,10 +54,10 @@ func Run(configPath string) error {
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 		defer cancel()
 
-		if err := rest.Server.Shutdown(ctxWithTimeout); err != nil {
+		if err := restServer.Shutdown(ctxWithTimeout); err != nil {
 			errs := errors.Join(fmt.Errorf("shutting down server: %w", err))
 
-			if err := rest.Server.Close(); err != nil {
+			if err := restServer.Close(); err != nil {
 				errs = errors.Join(errs, fmt.Errorf("closing server: %w", err))
 			}
 

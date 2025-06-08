@@ -11,7 +11,7 @@ type config struct {
 	AppEnv string `env:"APP_ENV" envDefault:"development"`
 }
 
-func Init() {
+func init() {
 	cfg, err := env.ParseAs[config]()
 	if err != nil {
 		slog.Error("failed to parse env", slog.Any("error", err))

@@ -10,8 +10,8 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/types"
-	up "github.com/kianooshaz/skeleton/services/user/user/protocol"
-	"github.com/kianooshaz/skeleton/services/user/user/service/storage"
+	up "github.com/kianooshaz/skeleton/services/user/users/protocol"
+	"github.com/kianooshaz/skeleton/services/user/users/service/storage"
 )
 
 type (
