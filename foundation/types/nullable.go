@@ -67,17 +67,25 @@ func (n *Nullable[T]) UnmarshalParam(param string) error {
 	case string:
 		n.Value = any(param).(T)
 	case int8:
-		var parsed int
-		parsed, err = strconv.Atoi(param)
+		var parsed int64
+		parsed, err = strconv.ParseInt(param, 10, 8)
 		n.Value = any(int8(parsed)).(T)
 	case int16:
-		var parsed int
-		parsed, err = strconv.Atoi(param)
+		var parsed int64
+		parsed, err = strconv.ParseInt(param, 10, 16)
 		n.Value = any(int16(parsed)).(T)
 	case int32:
-		var parsed int
-		parsed, err = strconv.Atoi(param)
+		var parsed int64
+		parsed, err = strconv.ParseInt(param, 10, 32)
 		n.Value = any(int32(parsed)).(T)
+	case int64:
+		var parsed int64
+		parsed, err = strconv.ParseInt(param, 10, 64)
+		n.Value = any(parsed).(T)
+	case int:
+		var parsed int64
+		parsed, err = strconv.ParseInt(param, 10, 0)
+		n.Value = any(int(parsed)).(T)
 	case uint8:
 		var parsed uint64
 		parsed, err = strconv.ParseUint(param, 10, 8)
@@ -101,6 +109,10 @@ func (n *Nullable[T]) UnmarshalParam(param string) error {
 	case float64:
 		var parsed float64
 		parsed, err = strconv.ParseFloat(param, 64)
+		n.Value = any(parsed).(T)
+	case bool:
+		var parsed bool
+		parsed, err = strconv.ParseBool(param)
 		n.Value = any(parsed).(T)
 	case time.Time:
 		var parsed time.Time
