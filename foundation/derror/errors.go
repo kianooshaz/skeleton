@@ -15,6 +15,7 @@ var ErrInvalidRows = errors.New("100007")
 var ErrPageValueTooSmall = errors.New("100008")
 var ErrRowsValueTooSmall = errors.New("100009")
 var ErrRowsValueTooLarge = errors.New("100010")
+var ErrRateLimitExceeded = errors.New("100011")
 
 // user errors
 var ErrUserNotFound = errors.New("100100")

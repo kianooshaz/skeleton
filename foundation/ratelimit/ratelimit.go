@@ -2,20 +2,22 @@ package ratelimit
 
 import (
 	"context"
-	"errors"
+	"log"
 	"time"
 
+	"github.com/kianooshaz/skeleton/foundation/config"
 	"github.com/redis/go-redis/v9"
 )
 
 // RateLimiter is the main struct for the sliding window rate limiter.
 type RateLimiter struct {
 	redisClient redis.Cmdable
-	key         string
 	limit       int
 	window      time.Duration
 	ttl         time.Duration
 }
+
+var SlidingWindowRateLimiter *RateLimiter
 
 var slidingWindowLua = `
 local key = KEYS[1]
@@ -41,49 +43,33 @@ end
 `
 
 type RateLimiterConfig struct {
-	Key    string        `yaml:"key" validate:"required"`
 	Limit  int           `yaml:"limit" validate:"required"`
 	Window time.Duration `yaml:"window" validate:"required"`
 	TTL    time.Duration `yaml:"ttl" validate:"required"`
 }
 
-func (c RateLimiterConfig) Validate() error {
-	if c.Key == "" {
-		return errors.New("key must be provided")
-	}
-	if c.Limit <= 0 {
-		return errors.New("limit must be greater than 0")
-	}
-	if c.Window <= 0 {
-		return errors.New("window must be greater than 0")
-	}
-	if c.TTL <= 0 {
-		return errors.New("ttl must be greater than 0")
-	}
-	return nil
-}
-
 // New creates a new Sliding Window RateLimiter instance.
-func New(redisClient redis.Cmdable, config RateLimiterConfig) (*RateLimiter, error) {
-	if err := config.Validate(); err != nil {
-		return nil, err
+func Init(redisClient redis.Cmdable) {
+	cfg, err := config.Load[RateLimiterConfig]("ratelimit")
+	if err != nil {
+		log.Fatalf("failed to load rate limiter config: %v", err)
+		return
 	}
 
-	return &RateLimiter{
+	SlidingWindowRateLimiter = &RateLimiter{
 		redisClient: redisClient,
-		key:         config.Key,
-		limit:       config.Limit,
-		window:      config.Window,
-		ttl:         config.TTL,
-	}, nil
+		limit:       cfg.Limit,
+		window:      cfg.Window,
+		ttl:         cfg.TTL,
+	}
 }
 
 // Allow checks if a new request is allowed under the current sliding window rate limit.
 // Returns true if allowed, false otherwise.
-func (rl *RateLimiter) Allow(ctx context.Context) (bool, error) {
+func (rl *RateLimiter) Allow(ctx context.Context, key string) (bool, error) {
 	nowMs := time.Now().UnixMilli()
 
-	result, err := rl.redisClient.Eval(ctx, slidingWindowLua, []string{rl.key},
+	result, err := rl.redisClient.Eval(ctx, slidingWindowLua, []string{key},
 		nowMs,
 		rl.window.Milliseconds(),
 		rl.limit,
