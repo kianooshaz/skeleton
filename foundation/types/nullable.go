@@ -61,6 +61,8 @@ func FromSQLNullString[T any](value sql.NullString) Nullable[T] {
 		return Nullable[T]{Value: zero, Valid: false}
 	}
 }
+
+// FromSQLNullTime converts a sql.NullTime to a Nullable[T].
 func FromSQLNullTime[T any](value sql.NullTime) Nullable[T] {
 	if !value.Valid {
 		var zero T
