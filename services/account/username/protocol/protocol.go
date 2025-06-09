@@ -1,12 +1,42 @@
-package protocol
+package aup
 
 import (
 	"context"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kianooshaz/skeleton/foundation/types"
+	"github.com/kianooshaz/skeleton/foundation/order"
+	"github.com/kianooshaz/skeleton/foundation/pagination"
+	"github.com/kianooshaz/skeleton/foundation/stat"
+	iop "github.com/kianooshaz/skeleton/services/identify/organization/protocol"
+	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
+	iunp "github.com/kianooshaz/skeleton/services/identify/username/protocol"
 )
+
+type Username struct {
+	ID             int                `json:"id" bson:"id"`
+	Identifier     iunp.Username      `json:"identifier" bson:"identifier"`
+	UserID         iup.UserID         `json:"user_id" bson:"user_id"`
+	OrganizationID iop.OrganizationID `json:"organization_id" bson:"organization_id"`
+	Status         stat.Status        `json:"status" bson:"status"`
+	CreatedAt      time.Time          `json:"created_at" bson:"created_at"`
+	UpdatedAt      time.Time          `json:"updated_at" bson:"updated_at"`
+}
+
+type AddRequest struct {
+	UserID         iup.UserID         `json:"user_id" bson:"user_id"`
+	OrganizationID iop.OrganizationID `json:"organization_id" bson:"organization_id"`
+	Identifier     iunp.Username      `json:"identifier" bson:"identifier"`
+}
+
+type ListRequest struct {
+	Identifier     *iunp.Username `json:"identifier" bson:"identifier"`
+	UserID         *string        `json:"user_id" bson:"user_id"`
+	OrganizationID *string        `json:"organization_id" bson:"organization_id"`
+	Status         *stat.Status   `json:"status" bson:"status"`
+	pagination.Page
+	order.OrderBy
+}
 
 type UsernameService interface {
 	// Add creates a new username.
@@ -16,7 +46,7 @@ type UsernameService interface {
 	Get(ctx context.Context, id string) (Username, error)
 
 	// Search returns usernames with the specified search criteria.
-	List(ctx context.Context, userID *string, organizationID *string, status *types.Status, limit int, offset int) ([]Username, error)
+	List(ctx context.Context, req ListRequest) (pagination.Response[Username], error)
 
 	// BePrimary sets the username with the specified ID as the primary username.
 	BePrimary(context.Context, uuid.UUID, uuid.UUID, string) error
@@ -32,32 +62,4 @@ type UsernameService interface {
 
 	// Unreserve unreserves the username with the specified ID.
 	Unreserve(ctx context.Context, id string, userID, organizationID uuid.UUID) error
-}
-
-type Username struct {
-	ID             string               `json:"id" bson:"id"`
-	UserID         types.UserID         `json:"user_id" bson:"user_id"`
-	OrganizationID types.OrganizationID `json:"organization_id" bson:"organization_id"`
-	Status         types.Status         `json:"status" bson:"status"`
-	CreatedAt      time.Time            `json:"created_at" bson:"created_at"`
-	UpdatedAt      time.Time            `json:"updated_at" bson:"updated_at"`
-}
-
-type AddRequest struct {
-	UserID         types.UserID         `json:"user_id" bson:"user_id"`
-	OrganizationID types.OrganizationID `json:"organization_id" bson:"organization_id"`
-	ID             string               `json:"id" bson:"id"`
-}
-
-type ListRequest struct {
-	UserID         *string       `json:"user_id" bson:"user_id"`
-	OrganizationID *string       `json:"organization_id" bson:"organization_id"`
-	Status         *types.Status `json:"status" bson:"status"`
-	Limit          int           `json:"limit" bson:"limit"`
-	Offset         int           `json:"offset" bson:"offset"`
-}
-
-type ListResponse struct {
-	Items []Username `json:"items" bson:"items"`
-	Total int64      `json:"total" bson:"total"`
 }

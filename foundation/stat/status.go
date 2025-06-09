@@ -1,4 +1,4 @@
-package types
+package stat
 
 // Status represents a set of status flags, using a uint64 as the underlying type.
 type Status uint

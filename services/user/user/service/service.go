@@ -9,15 +9,15 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
-	"github.com/kianooshaz/skeleton/foundation/types"
-	up "github.com/kianooshaz/skeleton/services/user/users/protocol"
-	"github.com/kianooshaz/skeleton/services/user/users/service/storage"
+	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
+	up "github.com/kianooshaz/skeleton/services/user/user/protocol"
+	"github.com/kianooshaz/skeleton/services/user/user/service/storage"
 )
 
 type (
 	storer interface {
 		Create(ctx context.Context, user up.User) error
-		Get(ctx context.Context, id types.UserID) (up.User, error)
+		Get(ctx context.Context, id iup.UserID) (up.User, error)
 		List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]up.User, error)
 		Count(ctx context.Context) (int, error)
 	}

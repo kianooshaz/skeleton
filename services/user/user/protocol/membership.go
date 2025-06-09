@@ -1,4 +1,4 @@
-package protocol
+package up
 
 import (
 	"context"
@@ -6,16 +6,16 @@ import (
 
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
-	"github.com/kianooshaz/skeleton/foundation/types"
+	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
 )
 
 type User struct {
-	ID        types.UserID `json:"id"`
-	CreatedAt time.Time    `json:"created_at"`
+	ID        iup.UserID `json:"id"`
+	CreatedAt time.Time  `json:"created_at"`
 }
 
 type GetUserRequest struct {
-	ID types.UserID `json:"id" bson:"id"`
+	ID iup.UserID `json:"id" bson:"id"`
 }
 
 type ListUserRequest struct {

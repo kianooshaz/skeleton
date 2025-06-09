@@ -10,8 +10,8 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/session"
-	"github.com/kianooshaz/skeleton/foundation/types"
-	"github.com/kianooshaz/skeleton/services/user/users/protocol"
+	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
+	up "github.com/kianooshaz/skeleton/services/user/user/protocol"
 )
 
 type UserStorage struct {
@@ -28,7 +28,7 @@ const create = `
 	)
 `
 
-func (us *UserStorage) Create(ctx context.Context, user protocol.User) error {
+func (us *UserStorage) Create(ctx context.Context, user up.User) error {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
 	_, err := conn.ExecContext(ctx, create, user.ID, user.CreatedAt)
@@ -45,19 +45,19 @@ const get = `
 		id = $1
 `
 
-func (us *UserStorage) Get(ctx context.Context, id types.UserID) (protocol.User, error) {
+func (us *UserStorage) Get(ctx context.Context, id iup.UserID) (up.User, error) {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
 	row := conn.QueryRowContext(ctx, get, id)
 
-	var user protocol.User
+	var user up.User
 	err := row.Scan(&user.ID, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return protocol.User{}, derror.ErrUserNotFound
+			return up.User{}, derror.ErrUserNotFound
 		}
 
-		return protocol.User{}, err
+		return up.User{}, err
 	}
 
 	return user, err
@@ -71,7 +71,7 @@ const list = `
 		users
 `
 
-func (us *UserStorage) List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]protocol.User, error) {
+func (us *UserStorage) List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]up.User, error) {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
 	list := list + page.String(pagination.SQLStringer(20)) + orderBy.String(oderStringer)
@@ -82,9 +82,9 @@ func (us *UserStorage) List(ctx context.Context, page pagination.Page, orderBy o
 	}
 	defer rows.Close()
 
-	var users []protocol.User
+	var users []up.User
 	for rows.Next() {
-		var user protocol.User
+		var user up.User
 		err := rows.Scan(&user.ID, &user.CreatedAt)
 		if err != nil {
 			return nil, err

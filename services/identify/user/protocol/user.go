@@ -1,4 +1,4 @@
-package types
+package iup
 
 import "github.com/google/uuid"
 

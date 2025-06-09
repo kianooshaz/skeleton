@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
-	"github.com/kianooshaz/skeleton/foundation/types"
-	up "github.com/kianooshaz/skeleton/services/user/users/protocol"
+	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
+	up "github.com/kianooshaz/skeleton/services/user/user/protocol"
 )
 
 func (s *service) Create(ctx context.Context) (up.User, error) {
@@ -22,7 +22,7 @@ func (s *service) Create(ctx context.Context) (up.User, error) {
 	}
 
 	user := up.User{
-		ID:        types.UserID(id),
+		ID:        iup.UserID(id),
 		CreatedAt: time.Now(),
 	}
 
