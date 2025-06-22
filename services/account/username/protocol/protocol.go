@@ -1,4 +1,4 @@
-package aup
+package aunp
 
 import (
 	"context"
@@ -37,30 +37,18 @@ type ListUsername struct {
 
 type UsernameService interface {
 	// Add creates a new username.
-	Assign(ctx context.Context, req AssignRequest) error
+	Assign(ctx context.Context, req AssignRequest) (Username, error)
 
 	ListAssigned(ctx context.Context, req ListAssignedRequest) (ListAssignedResponse, error)
 
 	// Get returns the username with the specified ID.
-	Get(ctx context.Context, id uuid.UUID) (Username, error)
+	Get(ctx context.Context, id iunp.Username) (Username, error)
 
 	// Search returns usernames with the specified search criteria.
 	List(ctx context.Context, req ListRequest) (ListResponse, error)
 
 	// BePrimary sets the username with the specified ID as the primary username.
-	BePrimary(context.Context, uuid.UUID, uuid.UUID, string) error
-
-	// Hidden hides the username with the specified ID.
-	Hidden(ctx context.Context, id uuid.UUID) error
-
-	// Unhidden makes the username with the specified ID visible.
-	Unhidden(ctx context.Context, id uuid.UUID) error
-
-	// Reserve reserves the username with the specified ID.
-	Reserve(ctx context.Context, username iunp.Username) (Username, error)
-
-	// Unreserve unreserves the username with the specified ID.
-	Unreserve(ctx context.Context, id uuid.UUID) error
+	BePrimary(context.Context, iunp.Username) error
 }
 
 type ListAssignedResponse pagination.Response[ListUsername]
@@ -77,5 +65,4 @@ type ListRequest struct {
 type ListResponse pagination.Response[ListUsername]
 
 type GetRequest struct {
-	
 }

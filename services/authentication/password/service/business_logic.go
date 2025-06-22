@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"unicode"
 
 	"github.com/google/uuid"
@@ -21,7 +22,7 @@ func (s *PasswordService) SavePassword(ctx context.Context, userID uuid.UUID, pa
 
 	passwordHash, err := s.hashPassword(password)
 	if err != nil {
-		s.logger.Error("failed to hash password", "error", err)
+		s.logger.Error("failed to hash password", slog.String("error", err.Error()))
 
 		return &Password{}, err
 	}
@@ -42,7 +43,7 @@ func (s *PasswordService) SavePassword(ctx context.Context, userID uuid.UUID, pa
 
 	if row.PasswordHash != "" {
 		if err := s.db.Delete(ctx, row.ID); err != nil {
-			s.logger.Error("failed to delete old password", "error", err)
+			s.logger.Error("failed to delete old password", slog.String("error", err.Error()))
 
 			return &Password{}, err
 		}
@@ -50,7 +51,7 @@ func (s *PasswordService) SavePassword(ctx context.Context, userID uuid.UUID, pa
 
 	id, err := uuid.NewV7()
 	if err != nil {
-		s.logger.Error("Error encountered while creating new uuid", "error", err)
+		s.logger.Error("Error encountered while creating new uuid", slog.String("error", err.Error()))
 
 		return &Password{}, derror.ErrInternalSystem
 	}
@@ -61,7 +62,7 @@ func (s *PasswordService) SavePassword(ctx context.Context, userID uuid.UUID, pa
 		PasswordHash: string(passwordHash),
 	})
 	if err != nil {
-		s.logger.Error("failed to save password", "error", err)
+		s.logger.Error("failed to save password", slog.String("error", err.Error()))
 
 		return &Password{}, err
 	}
@@ -91,7 +92,7 @@ func (s *PasswordService) checkPasswordHistory(ctx context.Context, userID uuid.
 		Limit:  s.config.CheckPasswordHistoryLimit,
 	})
 	if err != nil {
-		s.logger.Error("failed to get password history", "error", err)
+		s.logger.Error("failed to get password history", slog.String("error", err.Error()))
 
 		return false, derror.ErrInternalSystem
 	}

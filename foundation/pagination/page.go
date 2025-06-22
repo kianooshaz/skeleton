@@ -3,8 +3,8 @@ package pagination
 
 // Page holds pagination details: page number and rows per page.
 type Page struct {
-	PageNumber int `query:"page_number"`
-	PageRows   int `query:"page_rows"`
+	PageNumber uint `query:"page_number"`
+	PageRows   uint `query:"page_rows"`
 }
 
 type StringerFunc func(Page) string

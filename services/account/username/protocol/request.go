@@ -1,4 +1,4 @@
-package aup
+package aunp
 
 import (
 	"github.com/kianooshaz/skeleton/foundation/derror"

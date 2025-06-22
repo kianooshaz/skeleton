@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/session"
-	suu "github.com/kianooshaz/skeleton/services/user/user/serivce"
+	uus "github.com/kianooshaz/skeleton/services/user/user/service"
 	"github.com/labstack/echo/v4"
 )
 
@@ -27,7 +27,7 @@ func UserID() echo.MiddlewareFunc {
 				slog.Error("Error encountered while converting userID string to uuid", slog.String("error", err.Error()))
 			}
 
-			user, err := suu.Service.Create(c.Request().Context())
+			user, err := uus.Service.Create(c.Request().Context())
 			if err != nil {
 				slog.Error("Error encountered while creating user in UserID middleware", slog.String("error", err.Error()))
 				return derror.ErrInternalSystem

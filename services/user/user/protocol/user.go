@@ -1,4 +1,4 @@
-package suup
+package uup
 
 import (
 	"context"

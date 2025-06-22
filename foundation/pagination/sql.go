@@ -2,7 +2,7 @@ package pagination
 
 import "fmt"
 
-func SQLStringer(maxRows int) StringerFunc {
+func SQLStringer(maxRows uint) StringerFunc {
 	return func(p Page) string {
 		offset := p.PageRows * p.PageNumber
 

@@ -11,7 +11,7 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/session"
 	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
-	suup "github.com/kianooshaz/skeleton/services/user/user/protocol"
+	uup "github.com/kianooshaz/skeleton/services/user/user/protocol"
 )
 
 type UserStorage struct {
@@ -28,7 +28,7 @@ const create = `
 	)
 `
 
-func (us *UserStorage) Create(ctx context.Context, user suup.User) error {
+func (us *UserStorage) Create(ctx context.Context, user uup.User) error {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
 	_, err := conn.ExecContext(ctx, create, user.ID, user.CreatedAt)
@@ -45,19 +45,19 @@ const get = `
 		id = $1
 `
 
-func (us *UserStorage) Get(ctx context.Context, id iup.UserID) (suup.User, error) {
+func (us *UserStorage) Get(ctx context.Context, id iup.UserID) (uup.User, error) {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
 	row := conn.QueryRowContext(ctx, get, id)
 
-	var user suup.User
+	var user uup.User
 	err := row.Scan(&user.ID, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return suup.User{}, derror.ErrUserNotFound
+			return uup.User{}, derror.ErrUserNotFound
 		}
 
-		return suup.User{}, err
+		return uup.User{}, err
 	}
 
 	return user, err
@@ -71,7 +71,7 @@ const list = `
 		users
 `
 
-func (us *UserStorage) List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]suup.User, error) {
+func (us *UserStorage) List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]uup.User, error) {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
 	list := list + page.String(pagination.SQLStringer(20)) + orderBy.String(oderStringer)
@@ -82,9 +82,9 @@ func (us *UserStorage) List(ctx context.Context, page pagination.Page, orderBy o
 	}
 	defer rows.Close()
 
-	var users []suup.User
+	var users []uup.User
 	for rows.Next() {
-		var user suup.User
+		var user uup.User
 		err := rows.Scan(&user.ID, &user.CreatedAt)
 		if err != nil {
 			return nil, err

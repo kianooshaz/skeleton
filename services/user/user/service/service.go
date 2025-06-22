@@ -1,5 +1,5 @@
 // Package service provides the implementation of the UserService interface.
-package suu
+package uus
 
 import (
 	"context"
@@ -10,15 +10,15 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
-	suup "github.com/kianooshaz/skeleton/services/user/user/protocol"
+	uup "github.com/kianooshaz/skeleton/services/user/user/protocol"
 	"github.com/kianooshaz/skeleton/services/user/user/service/storage"
 )
 
 type (
 	storer interface {
-		Create(ctx context.Context, user suup.User) error
-		Get(ctx context.Context, id iup.UserID) (suup.User, error)
-		List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]suup.User, error)
+		Create(ctx context.Context, user uup.User) error
+		Get(ctx context.Context, id iup.UserID) (uup.User, error)
+		List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]uup.User, error)
 		Count(ctx context.Context) (int, error)
 	}
 
@@ -29,7 +29,7 @@ type (
 	}
 )
 
-var Service suup.UserService = &service{}
+var Service uup.UserService = &service{}
 
 func init() {
 	Service = &service{

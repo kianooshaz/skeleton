@@ -4,15 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	dp "github.com/kianooshaz/skeleton/foundation/database/protocol"
-	"github.com/kianooshaz/skeleton/foundation/derror"
-	"github.com/kianooshaz/skeleton/foundation/order"
+	fdp "github.com/kianooshaz/skeleton/foundation/database/protocol"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/session"
-	"github.com/kianooshaz/skeleton/foundation/types"
-	"github.com/kianooshaz/skeleton/services/user/username/protocol"
+	aunp "github.com/kianooshaz/skeleton/services/account/username/protocol"
+	iop "github.com/kianooshaz/skeleton/services/identify/organization/protocol"
+	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
+	iunp "github.com/kianooshaz/skeleton/services/identify/username/protocol"
 )
 
 type UsernameStorage struct {
@@ -21,17 +21,17 @@ type UsernameStorage struct {
 
 const create = `
 	INSERT INTO usernames (
-    	id, user_id, organization_id, status, created_at, updated_at, deleted_at
+    	id, username, user_id, organization_id, status, created_at, updated_at, deleted_at
 	) VALUES (
-        $1, $2, $3, $4, NOW(), NOW(), NULL
+        $1, $2, $3, $4, $5, NOW(), NOW(), NULL
     )
 `
 
-func (us *UsernameStorage) Create(ctx context.Context, username protocol.Username) error {
+func (us *UsernameStorage) Create(ctx context.Context, username aunp.Username) error {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
-	_, row := conn.ExecContext(ctx, create, username.ID, username.UserID, username.OrganizationID, username.Status)
-	return row
+	_, err := conn.ExecContext(ctx, create, username.ID, username.Username, username.UserID, username.OrganizationID, username.Status)
+	return err
 }
 
 const delete = `
@@ -43,7 +43,7 @@ const delete = `
 		id = $1 AND deleted_at IS NULL
 `
 
-func (us *UsernameStorage) Delete(ctx context.Context, id string) error {
+func (us *UsernameStorage) Delete(ctx context.Context, id iunp.Username) error {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
 	_, err := conn.ExecContext(ctx, delete, id)
@@ -52,111 +52,117 @@ func (us *UsernameStorage) Delete(ctx context.Context, id string) error {
 
 const get = `
 	SELECT
-		id, user_id, organization_id, status, created_at, updated_at
+		id, username, user_id, organization_id, status, created_at, updated_at
 	FROM
 		usernames
 	WHERE
 		id = $1 AND deleted_at IS NULL
 `
 
-func (us *UsernameStorage) Get(ctx context.Context, id string) (protocol.Username, error) {
+func (us *UsernameStorage) Get(ctx context.Context, id iunp.Username) (aunp.Username, error) {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
-	row := conn.QueryRowContext(ctx, get, id)
-
-	var username protocol.Username
-	err := row.Scan(&username.ID, &username.UserID, &username.OrganizationID, &username.Status, &username.CreatedAt, &username.UpdatedAt)
+	var username aunp.Username
+	err := conn.QueryRowContext(ctx, get, id).
+		Scan(&username.ID, &username.Username, &username.UserID, &username.OrganizationID, &username.Status, &username.CreatedAt, &username.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return protocol.Username{}, derror.ErrUsernameNotFound
+			return aunp.Username{}, fdp.ErrRowNotFound
 		}
-
-		return protocol.Username{}, err
+		return aunp.Username{}, err
 	}
 
-	return username, err
+	return username, nil
 }
 
 const listByUser = `
 	SELECT
-		id, user_id, organization_id, status, created_at, updated_at
+		id, username, user_id, organization_id, status, created_at, updated_at
 	FROM
 		usernames
 	WHERE
 		user_id = $1 AND deleted_at IS NULL
 `
 
-func (us *UsernameStorage) ListByUser(
-	ctx context.Context,
-	userID types.UserID,
-	orderBy order.OrderBy,
-	page pagination.Page,
-	isPrimary bool,
-) ([]protocol.Username, error) {
+func (us *UsernameStorage) ListWithSearch(ctx context.Context, req aunp.ListRequest) ([]aunp.Username, error) {
+	conn := session.GetDBConnection(ctx, us.Conn)
 
-	var query string
+	query := listByUser + req.OrderBy.String(oderStringer) + req.Page.String(pagination.SQLStringer(20))
 
-	if isPrimary {
-		query = listByUser + fmt.Sprintf(" AND status & %d = %d ", types.Primary, types.Primary)
-	}
-
-	query = query + orderBy.String(oderStringer) + page.String(pagination.SQLStringer(20))
-
-	rows, err := us.Conn.QueryContext(ctx, query, userID)
+	rows, err := conn.QueryContext(ctx, query, req.UserID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	usernames := make([]protocol.Username, 0, page.PageRows)
+	var usernames []aunp.Username
 	for rows.Next() {
-		var username protocol.Username
-		err := rows.Scan(&username.ID, &username.UserID, &username.OrganizationID, &username.Status, &username.CreatedAt, &username.UpdatedAt)
-		if err != nil {
+		var username aunp.Username
+		if err := rows.Scan(
+			&username.ID,
+			&username.Username,
+			&username.UserID,
+			&username.OrganizationID,
+			&username.Status,
+			&username.CreatedAt,
+			&username.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
-
 		usernames = append(usernames, username)
 	}
 
 	return usernames, nil
 }
 
+const CountWithSearch = `
+	SELECT
+		COUNT(id)
+	FROM	
+		usernames
+	WHERE
+		user_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+`
+
+func (us *UsernameStorage) CountWithSearch(ctx context.Context, req aunp.ListRequest) (int64, error) {
+	conn := session.GetDBConnection(ctx, us.Conn)
+
+	var count int64
+	err := conn.QueryRowContext(ctx, CountWithSearch, req.UserID, req.OrganizationID).Scan(&count)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, fdp.ErrRowNotFound
+		}
+		return 0, err
+	}
+
+	return count, nil
+}
+
 const listByUserAndOrganization = `
 	SELECT
-		id, user_id, organization_id, status, created_at, updated_at
+		id, username, user_id, organization_id, status, created_at, updated_at
 	FROM
 		usernames
 	WHERE
 		user_id = $1 AND organization_id = $2 AND deleted_at IS NULL
 `
 
-func (us *UsernameStorage) ListByUserAndOrganization(
-	ctx context.Context,
-	userID types.UserID,
-	organizationID types.OrganizationID,
-	orderBy order.OrderBy,
-	page pagination.Page,
-	isPrimary bool,
-) ([]protocol.Username, error) {
-	var query string
+func (us *UsernameStorage) ListByUserAndOrganization(ctx context.Context, req aunp.ListAssignedRequest) ([]aunp.Username, error) {
+	conn := session.GetDBConnection(ctx, us.Conn)
 
-	if isPrimary {
-		query = listByUserAndOrganization + fmt.Sprintf(" AND status & %d = %d ", types.Primary, types.Primary)
-	}
+	query := listByUserAndOrganization + req.OrderBy.String(oderStringer) + req.Page.String(pagination.SQLStringer(20))
 
-	query = query + orderBy.String(oderStringer) + page.String(pagination.SQLStringer(20))
-
-	rows, err := us.Conn.QueryContext(ctx, query, userID, organizationID)
+	rows, err := conn.QueryContext(ctx, query, req.UserID, req.OrganizationID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	usernames := make([]protocol.Username, 0, page.PageRows)
+	usernames := make([]aunp.Username, 0, req.Page.PageRows)
 	for rows.Next() {
-		var username protocol.Username
-		err := rows.Scan(&username.ID, &username.UserID, &username.OrganizationID, &username.Status, &username.CreatedAt, &username.UpdatedAt)
+		var username aunp.Username
+		err := rows.Scan(&username.ID, &username.Username, &username.UserID, &username.OrganizationID, &username.Status, &username.CreatedAt, &username.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -167,70 +173,42 @@ func (us *UsernameStorage) ListByUserAndOrganization(
 	return usernames, nil
 }
 
-const update = `
+const updateStatus = `
 	UPDATE
 		usernames
 	SET 
-		user_id = $2,
-		organization_id = $3,
-		status = $4,
+		status = $2,
 		updated_at = NOW()
 	WHERE
 		id = $1 AND deleted_at IS NULL
 `
 
-type UpdateRequest struct {
-	ID             string
-	UserID         types.UserID
-	OrganizationID types.OrganizationID
-	Status         types.Status
-}
+func (us *UsernameStorage) UpdateStatus(ctx context.Context, username aunp.Username) error {
+	conn := session.GetDBConnection(ctx, us.Conn)
 
-func (us *UsernameStorage) UpdateStatus(ctx context.Context, req protocol.Username) error {
-	_, err := us.Conn.ExecContext(ctx, update, req.ID, req.UserID, req.OrganizationID, req.Status)
+	_, err := conn.ExecContext(ctx, updateStatus, username.ID, username.Status)
 	return err
 }
 
-const count = `
+const exist = `
 	SELECT
-		COUNT(id)
-	FROM
-		usernames
-	WHERE
-		id = $1 AND deleted_at IS NULL
+		EXISTS(
+			SELECT 1
+			FROM usernames
+			WHERE username = $1 AND deleted_at IS NULL
+		)
 `
 
-func (us *UsernameStorage) Count(ctx context.Context, id string) (int64, error) {
-	row := us.Conn.QueryRowContext(ctx, count, id)
+func (us *UsernameStorage) Exist(ctx context.Context, username iunp.Username) (bool, error) {
+	conn := session.GetDBConnection(ctx, us.Conn)
 
-	var count int64
-	err := row.Scan(&count)
+	var exists bool
+	err := conn.QueryRowContext(ctx, exist, username).Scan(&exists)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 
-	return count, nil
-}
-
-const countByUser = `
-	SELECT
-		COUNT(id)
-	FROM
-		usernames
-	WHERE
-		user_id = $1 AND deleted_at IS NULL
-`
-
-func (us *UsernameStorage) CountByUser(ctx context.Context, userID types.UserID) (int64, error) {
-	row := us.Conn.QueryRowContext(ctx, countByUser, userID)
-
-	var count int64
-	err := row.Scan(&count)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
+	return exists, nil
 }
 
 const countByUserAndOrganization = `
@@ -242,11 +220,11 @@ const countByUserAndOrganization = `
 		user_id = $1 AND organization_id = $2 deleted_at IS NULL
 `
 
-func (us *UsernameStorage) CountByUserAndOrganization(ctx context.Context, userID types.UserID, organization types.OrganizationID) (int64, error) {
-	row := us.Conn.QueryRowContext(ctx, countByUserAndOrganization, userID, organization)
+func (us *UsernameStorage) CountByUserAndOrganization(ctx context.Context, userID iup.UserID, organizationID iop.OrganizationID) (int64, error) {
+	conn := session.GetDBConnection(ctx, us.Conn)
 
 	var count int64
-	err := row.Scan(&count)
+	err := conn.QueryRowContext(ctx, countByUserAndOrganization, userID, organizationID).Scan(&count)
 	if err != nil {
 		return 0, err
 	}

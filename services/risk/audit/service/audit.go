@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/kianooshaz/skeleton/foundation/session"
 	ap "github.com/kianooshaz/skeleton/services/risk/audit/protocol"
@@ -19,7 +20,7 @@ func (as *auditService) processRecords() {
 		select {
 		case record := <-as.recordCh:
 			if err := as.storage.Create(context.Background(), record); err != nil {
-				as.logger.ErrorContext(session.SetRequestID(context.Background(), record.RequestID), "failed to create audit record", "error", err, "record", record)
+				as.logger.ErrorContext(session.SetRequestID(context.Background(), record.RequestID), "failed to create audit record", slog.String("error", err.Error()), "record", record)
 			}
 		case <-as.shutdown:
 			as.logger.Info("worker shutting down")
