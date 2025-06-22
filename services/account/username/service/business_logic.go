@@ -3,141 +3,90 @@ package service
 import (
 	"context"
 	"errors"
-	"strings"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	fdp "github.com/kianooshaz/skeleton/foundation/database/protocol"
 	"github.com/kianooshaz/skeleton/foundation/derror"
-	"github.com/kianooshaz/skeleton/services/user/username/protocol"
+	"github.com/kianooshaz/skeleton/foundation/pagination"
+	"github.com/kianooshaz/skeleton/foundation/session"
+	"github.com/kianooshaz/skeleton/foundation/stat"
+	"github.com/kianooshaz/skeleton/protocol"
+	aup "github.com/kianooshaz/skeleton/services/account/username/protocol"
 )
 
-func (s *Service) Add(ctx context.Context, req protocol.AddRequest) error {
-	if len(req.ID) < int(s.config.MinLength) || len(req.ID) > int(s.config.MaxLength) {
-		return derror.ErrUsernameLength
-	}
-
-	if !s.isValidUsername(req.ID) {
-		return derror.ErrUsernameInvalidCharacters
-	}
-
-	countValue, err := s.storage.Count(ctx, req.ID)
+func (s *Service) Get(ctx context.Context, id uuid.UUID) (aup.Username, error) {
+	username, err := s.storage.Get(ctx, id)
 	if err != nil {
-		s.logger.Error("error at getting count by username", "error", err)
-
-		return derror.ErrInternalSystem
-	}
-
-	if countValue > 0 {
-		return derror.ErrUsernameAlreadyExists
-	}
-
-	countByUser, err := s.storage.CountByUser(ctx, req.UserID)
-	if err != nil {
-		s.logger.Error("error at getting count by user id", "error", err)
-
-		return derror.ErrInternalSystem
-	}
-
-	if countByUser > int64(s.config.MaxPerUser) {
-		return derror.ErrUsernameMaxPerUser
-	}
-
-	countByOrganization, err := s.db.CountByUserAndOrganization(ctx, req.UserID)
-	if err != nil {
-		s.logger.Error("error at getting count by user and organization", "error", err)
-
-		return derror.ErrInternalSystem
-	}
-
-	if countByOrganization > int64(s.config.MaxPerOrganization) {
-		return derror.ErrUsernameMaxPerOrganization
-	}
-
-	status := stat.Unset
-	if countByOrganization == 0 {
-		status = stat.Primary
-	}
-
-	row, err := s.db.Create(ctx, db.CreateParams{
-		ID:     id,
-		UserID: userID,
-		Status: int64(status),
-	})
-	if err != nil {
-		s.logger.Error("error at creating username in database", "error", err)
-
-		return protocol.Username{}, derror.ErrInternalSystem
-	}
-
-	return protocol.Username{
-		ID:             row.ID,
-		UserID:         row.UserID,
-		OrganizationID: row.OrganizationID,
-		Status:         stat.Status(row.Status),
-	}, nil
-}
-
-func (s *Service) Get(ctx context.Context, id string) (protocol.Username, error) {
-	row, err := s.db.Get(ctx, id)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return protocol.Username{}, derror.ErrUserNotFound
+		if errors.Is(err, fdp.ErrRowNotFound) {
+			return aup.Username{}, derror.ErrUsernameNotFound
 		}
-		s.logger.Error("error at getting username from database", "username", id, "error", err)
 
-		return protocol.Username{}, derror.ErrInternalSystem
+		s.logger.Error("Error encountered while fetching username from database", slog.String("error", err.Error()))
+		return aup.Username{}, derror.ErrInternalSystem
 	}
 
-	return protocol.Username{
-		ID:             row.ID,
-		UserID:         row.UserID,
-		OrganizationID: row.OrganizationID,
-		Status:         stat.Status(row.Status),
-		CreatedAt:      row.CreatedAt.Time,
-		UpdatedAt:      row.UpdatedAt.Time,
-	}, nil
+	return username, nil
 }
 
-// Search implements protocol.ServiceUsername.
-func (s *Service) Search(ctx context.Context, userID *string, organizationID *string, status *stat.Status, limit int, offset int) ([]protocol.Username, error) {
-	panic("unimplemented")
-}
-
-func (s *Service) Count(ctx context.Context, userID *string, organizationID *string, status *stat.Status) (int64, error) {
-	panic("unimplemented")
-}
-
-func (s *Service) BePrimary(ctx context.Context, userID, organizationID uuid.UUID, id string) error {
-	rows, err := s.db.ListByUserAndOrganization(ctx, db.ListByUserAndOrganizationParams{
-		UserID:         userID,
-		OrganizationID: organizationID,
-	})
+func (s *Service) List(ctx context.Context, req aup.ListRequest) (pagination.Response[aup.ListUsername], error) {
+	usernames, err := s.storage.ListWithSearch(ctx, req)
 	if err != nil {
-		s.logger.Error("error at listing usernames", "error", err)
+		s.logger.Error("Error encountered while searching usernames", slog.String("error", err.Error()), slog.Any("request", req))
 
+		return pagination.Response[aup.ListUsername]{}, derror.ErrInternalSystem
+	}
+
+	count, err := s.storage.CountWithSearch(ctx, req)
+	if err != nil {
+		s.logger.Error("Error encountered while counting usernames", slog.String("error", err.Error()), slog.Any("request", req))
+
+		return pagination.Response[aup.ListUsername]{}, derror.ErrInternalSystem
+	}
+
+	result := make([]aup.ListUsername, 0, len(usernames))
+	for _, username := range usernames {
+		result = append(result, aup.ListUsername{
+			ID:             username.ID,
+			Username:       username.Username,
+			UserID:         username.UserID,
+			OrganizationID: username.OrganizationID,
+			Primary:        username.Status.Has(stat.Primary),
+			Locked:         username.Status.Has(stat.Locked),
+			Blocked:        username.Status.Has(stat.Blocked),
+			Reserved:       username.Status.Has(stat.Reserved),
+		})
+	}
+
+	return pagination.NewResponse(req.Page, int(count), result), nil
+}
+
+func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
+	username, err := s.storage.Get(ctx, id)
+	if err != nil {
+		if errors.Is(err, fdp.ErrRowNotFound) {
+			return derror.ErrUsernameNotFound
+		}
+		s.logger.Error("Error encountered while fetching username from db", "error", err)
 		return derror.ErrInternalSystem
 	}
 
-	if len(rows) == 0 {
-		return derror.ErrUsernameNotFound
-	}
-
-	tx, err := s._pdb.BeginTx(ctx, pgx.TxOptions{})
+	tx, ctx, err := session.BeginTransaction(ctx, s.storageConn)
 	if err != nil {
-		s.logger.Error("error at beginning transaction", "error", err)
-
-		return derror.ErrInternalSystem
+		s.logger.Error("error")
 	}
 
 	defer func() {
-		if err := tx.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
-			s.logger.Error("error at rolling back transaction", "error", err)
+		// TODO pgx.ErrTxClosed should change not depend database
+		if err := tx.Rollback(); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+			s.logger.Error("Error encountered while rolling back transaction", "error", err)
 		}
 	}()
 
 	queries := db.New(tx)
 
-	for _, row := range rows {
+	for _, row := range username {
 		status := stat.Status(row.Status)
 
 		switch {
@@ -154,7 +103,7 @@ func (s *Service) BePrimary(ctx context.Context, userID, organizationID uuid.UUI
 				OrganizationID: row.OrganizationID,
 				Status:         int64(status),
 			}); err != nil {
-				s.logger.Error("error at updating username", "error", err)
+				s.logger.Error("Error encountered while updating username", "error", err)
 
 				return derror.ErrInternalSystem
 			}
@@ -168,7 +117,7 @@ func (s *Service) BePrimary(ctx context.Context, userID, organizationID uuid.UUI
 				OrganizationID: row.OrganizationID,
 				Status:         int64(status),
 			}); err != nil {
-				s.logger.Error("error at updating username", "error", err)
+				s.logger.Error("Error encountered while updating username", "error", err)
 
 				return derror.ErrInternalSystem
 			}
@@ -176,7 +125,7 @@ func (s *Service) BePrimary(ctx context.Context, userID, organizationID uuid.UUI
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		s.logger.Error("error at committing transaction", "error", err)
+		s.logger.Error("Error encountered while committing transaction", "error", err)
 
 		return derror.ErrInternalSystem
 	}
@@ -190,7 +139,7 @@ func (s *Service) Hidden(ctx context.Context, id string) error {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return derror.ErrUsernameNotFound
 		}
-		s.logger.Error("error at getting username from database", "username", id, "error", err)
+		s.logger.Error("Error encountered while getting username from database", "username", id, "error", err)
 
 		return derror.ErrInternalSystem
 	}
@@ -209,7 +158,7 @@ func (s *Service) Hidden(ctx context.Context, id string) error {
 		OrganizationID: row.OrganizationID,
 		Status:         int64(status),
 	}); err != nil {
-		s.logger.Error("error at updating username", "error", err)
+		s.logger.Error("Error encountered while updating username", "error", err)
 
 		return derror.ErrInternalSystem
 	}
@@ -223,7 +172,7 @@ func (s *Service) Unhidden(ctx context.Context, id string) error {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return derror.ErrUsernameNotFound
 		}
-		s.logger.Error("error at getting username from database", "username", id, "error", err)
+		s.logger.Error("Error encountered while getting username from database", "username", id, "error", err)
 
 		return derror.ErrInternalSystem
 	}
@@ -242,7 +191,7 @@ func (s *Service) Unhidden(ctx context.Context, id string) error {
 		OrganizationID: row.OrganizationID,
 		Status:         int64(status),
 	}); err != nil {
-		s.logger.Error("error at updating username", "error", err)
+		s.logger.Error("Error encountered while updating username", "error", err)
 
 		return derror.ErrInternalSystem
 	}
@@ -252,16 +201,16 @@ func (s *Service) Unhidden(ctx context.Context, id string) error {
 
 func (s *Service) Reserve(ctx context.Context, id string) (protocol.Username, error) {
 	if len(id) < int(s.config.MinLength) || len(id) > int(s.config.MaxLength) {
-		return &Username{}, derror.ErrUsernameLength
+		return &Username{}, derror.ErrUsernameInvalid
 	}
 
 	if !s.isValidUsername(id) {
-		return &Username{}, derror.ErrUsernameInvalidCharacters
+		return &Username{}, derror.ErrUsernameInvalid
 	}
 
 	count, err := s.db.Count(ctx, id)
 	if err != nil {
-		s.logger.Error("error at getting username from database", "username", id, "error", err)
+		s.logger.Error("Error encountered while getting username from database", "username", id, "error", err)
 
 		return &Username{}, derror.ErrInternalSystem
 	}
@@ -275,7 +224,7 @@ func (s *Service) Reserve(ctx context.Context, id string) (protocol.Username, er
 		Status: int64(stat.Reserved),
 	})
 	if err != nil {
-		s.logger.Error("error at creating username in database", "error", err)
+		s.logger.Error("Error encountered while creating username in database", "error", err)
 
 		return &Username{}, derror.ErrInternalSystem
 	}
@@ -294,7 +243,7 @@ func (s *Service) Unreserve(ctx context.Context, id string, userID, organization
 		if errors.Is(err, pgx.ErrNoRows) {
 			return derror.ErrUsernameNotFound
 		}
-		s.logger.Error("error at getting username from database", "username", id, "error", err)
+		s.logger.Error("Error encountered while getting username from database", "username", id, "error", err)
 
 		return derror.ErrInternalSystem
 	}
@@ -309,20 +258,10 @@ func (s *Service) Unreserve(ctx context.Context, id string, userID, organization
 		OrganizationID: organizationID,
 		Status:         int64(stat.Unset),
 	}); err != nil {
-		s.logger.Error("error at updating username", "error", err)
+		s.logger.Error("Error encountered while updating username", "error", err)
 
 		return derror.ErrInternalSystem
 	}
 
 	return nil
-}
-
-func (s *Service) isValidUsername(value string) bool {
-	for _, char := range value {
-		if !strings.ContainsRune(s.config.AllowCharacters, char) {
-			return false
-		}
-	}
-
-	return true
 }

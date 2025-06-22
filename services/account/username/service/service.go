@@ -2,19 +2,20 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/kianooshaz/skeleton/foundation/config"
-	"github.com/kianooshaz/skeleton/foundation/order"
-	"github.com/kianooshaz/skeleton/foundation/pagination"
-	"github.com/kianooshaz/skeleton/foundation/sqlservice"
-	"github.com/kianooshaz/skeleton/foundation/storage/postgres"
-	"github.com/kianooshaz/skeleton/foundation/types"
-	"github.com/kianooshaz/skeleton/services/user/username/protocol"
-	"github.com/kianooshaz/skeleton/services/user/username/service/storage"
+	"github.com/kianooshaz/skeleton/foundation/database/postgres"
+	aup "github.com/kianooshaz/skeleton/services/account/username/protocol"
+	"github.com/kianooshaz/skeleton/services/account/username/service/storage"
+	iop "github.com/kianooshaz/skeleton/services/identify/organization/protocol"
+	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
+	iunp "github.com/kianooshaz/skeleton/services/identify/username/protocol"
 )
 
-var UsernameService protocol.UsernameService = &Service{}
+var UsernameService aup.UsernameService = &Service{}
 
 type (
 	Config struct {
@@ -26,28 +27,29 @@ type (
 	}
 
 	Storage interface {
-		Create(ctx context.Context, username protocol.Username) error
-		Delete(ctx context.Context, id string) error
-		Get(ctx context.Context, id string) (protocol.Username, error)
-		ListByUser(ctx context.Context, userID types.UserID, orderBy order.OrderBy, page pagination.Page,
-			isPrimary bool) ([]protocol.Username, error)
-		ListByUserAndOrganization(ctx context.Context, userID types.UserID, organizationID types.OrganizationID,
-			orderBy order.OrderBy, page pagination.Page, isPrimary bool) ([]protocol.Username, error)
-		UpdateStatus(ctx context.Context, req protocol.Username) error
-		Count(ctx context.Context, id string) (int64, error)
-		CountByUser(ctx context.Context, userID types.UserID) (int64, error)
-		CountByUserAndOrganization(ctx context.Context, userID types.UserID, organization types.OrganizationID) (int64, error)
+		Create(ctx context.Context, username aup.Username) error
+		Delete(ctx context.Context, id uuid.UUID) error
+		Get(ctx context.Context, id uuid.UUID) (aup.Username, error)
+		ListWithSearch(ctx context.Context, req aup.ListRequest) ([]aup.Username, error)
+		CountWithSearch(ctx context.Context, req aup.ListRequest) (int64, error)
+
+		ListByUserAndOrganization(ctx context.Context, userID iup.UserID, organizationID iop.OrganizationID) ([]aup.Username, error)
+		UpdateStatus(ctx context.Context, username aup.Username) error
+		Count(ctx context.Context, username iunp.Username) (int64, error)
+		CountByUser(ctx context.Context, userID iup.UserID) (int64, error)
+		CountByUserAndOrganization(ctx context.Context, userID iup.UserID, organization iop.OrganizationID) (int64, error)
 	}
 
 	Service struct {
-		config  Config
-		logger  slog.Logger
-		storage Storage
+		config      Config
+		logger      slog.Logger
+		storage     Storage
+		storageConn *sql.DB
 	}
 )
 
-func Init() {
-	cfg, err := config.Load[Config]("user.username")
+func init() {
+	cfg, err := config.Load[Config]("account.username")
 	if err != nil {
 		panic(err)
 	}
@@ -56,23 +58,12 @@ func Init() {
 		config: cfg,
 		logger: *slog.With(
 			slog.Group("package_info",
-				slog.String("module", "user"),
-				slog.String("service", "user"),
+				slog.String("module", "username"),
+				slog.String("service", "account"),
 			),
 		),
 		storage: &storage.UsernameStorage{
 			Conn: postgres.ConnectionPool,
-		},
-	}
-}
-
-// NewTx implements protocol.ServiceUser.
-func (s *Service) NewWithTx(sqlConn sqlservice.ConnectionPool) protocol.UsernameService {
-	return &Service{
-		config: s.config,
-		logger: s.logger,
-		storage: &storage.UsernameStorage{
-			Conn: sqlConn,
 		},
 	}
 }

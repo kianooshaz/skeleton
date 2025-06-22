@@ -1,5 +1,5 @@
 // Package service provides the implementation of the UserService interface.
-package service
+package suu
 
 import (
 	"context"
@@ -10,26 +10,26 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
-	up "github.com/kianooshaz/skeleton/services/user/user/protocol"
-	"github.com/kianooshaz/skeleton/services/user/user/service/storage"
+	suup "github.com/kianooshaz/skeleton/services/user/user/protocol"
+	"github.com/kianooshaz/skeleton/services/user/user/serivce/storage"
 )
 
 type (
 	storer interface {
-		Create(ctx context.Context, user up.User) error
-		Get(ctx context.Context, id iup.UserID) (up.User, error)
-		List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]up.User, error)
+		Create(ctx context.Context, user suup.User) error
+		Get(ctx context.Context, id iup.UserID) (suup.User, error)
+		List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]suup.User, error)
 		Count(ctx context.Context) (int, error)
 	}
 
 	service struct {
-		logger  *slog.Logger
-		storage storer
-		dbConn  *sql.DB
+		logger      *slog.Logger
+		storage     storer
+		storageConn *sql.DB
 	}
 )
 
-var Service up.UserService = &service{}
+var Service suup.UserService = &service{}
 
 func init() {
 	Service = &service{
@@ -42,6 +42,6 @@ func init() {
 		storage: &storage.UserStorage{
 			Conn: postgres.ConnectionPool,
 		},
-		dbConn: postgres.ConnectionPool,
+		storageConn: postgres.ConnectionPool,
 	}
 }

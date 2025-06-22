@@ -14,7 +14,7 @@ type config struct {
 func init() {
 	cfg, err := env.ParseAs[config]()
 	if err != nil {
-		slog.Error("failed to parse env", slog.Any("error", err))
+		slog.Error("failed to parse env", slog.String("error", err.Error()))
 	}
 
 	opts := &slog.HandlerOptions{

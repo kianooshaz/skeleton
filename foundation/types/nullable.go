@@ -2,6 +2,7 @@ package types
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -42,6 +43,7 @@ func (n *Nullable[T]) Set(value T) {
 	n.Value = value
 	n.Valid = true
 }
+
 func (n *Nullable[T]) UnmarshalParam(param string) error {
 	defer func() {
 		if r := recover(); r != nil {
@@ -53,7 +55,7 @@ func (n *Nullable[T]) UnmarshalParam(param string) error {
 		}
 	}()
 
-	if param == "" {
+	if len(param) == 0 || string(param) == "null" {
 		n.Valid = false
 		var zero T
 		n.Value = zero
@@ -129,6 +131,45 @@ func (n *Nullable[T]) UnmarshalParam(param string) error {
 
 	n.Valid = true
 	return nil
+}
+
+func (n *Nullable[T]) UnmarshalJSON(data []byte) error {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("panic in UnmarshalJSON",
+				slog.Any("data", string(data)),
+				slog.Any("recovered", r),
+			)
+			n.Valid = false
+		}
+	}()
+
+	if len(data) == 0 || string(data) == "null" {
+		n.Valid = false
+		var zero T
+		n.Value = zero
+		return nil
+	}
+
+	var v T
+	err := json.Unmarshal(data, &v)
+	if err != nil {
+		n.Valid = false
+		return fmt.Errorf("failed to unmarshal JSON to %T: %w", v, err)
+	}
+
+	n.Value = v
+	n.Valid = true
+	return nil
+}
+
+func (n Nullable[T]) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		// TODO : Handle null value in a way that fits your application
+		return []byte{}, nil
+	}
+
+	return fmt.Appendf([]byte{}, "%v", n.Value), nil
 }
 
 // FromSQLNullInt64 converts a sql.NullInt64 to a Nullable[int64].

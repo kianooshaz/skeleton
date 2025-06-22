@@ -1,8 +1,13 @@
-package protocol
+package fdp
 
 import (
 	"context"
 	"database/sql"
+	"errors"
+)
+
+var (
+	ErrRowNotFound = errors.New("row not found")
 )
 
 type QueryExecutor interface {

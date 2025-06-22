@@ -12,8 +12,8 @@ func errorResponse(err error, c echo.Context) {
 	status, ok := DerrorToHTTPStatus[err]
 	if !ok {
 		slog.Error(
-			"error at converting error to http status",
-			slog.Any("error", err),
+			"Error encountered while converting error code to http status",
+			slog.String("error", err.Error()),
 			slog.String("package", "rest"),
 		)
 		// If the error is not defined in DerrorToHTTPStatus, we return a 500 Internal Server Error
@@ -25,8 +25,8 @@ func errorResponse(err error, c echo.Context) {
 		"error": err.Error(),
 	}); err != nil {
 		slog.Error(
-			"error at sending error response",
-			slog.Any("error", err),
+			"Error encountered while sending response of error",
+			slog.String("error", err.Error()),
 			slog.Any("status", status),
 			slog.String("package", "rest"),
 		)
@@ -54,10 +54,8 @@ var DerrorToHTTPStatus = map[error]int{
 	derror.ErrUsernameNotFound:           http.StatusBadRequest,
 	derror.ErrUsernameAlreadyExists:      http.StatusBadRequest,
 	derror.ErrUsernameInvalid:            http.StatusBadRequest,
-	derror.ErrUsernameLength:             http.StatusBadRequest,
 	derror.ErrUsernameMaxPerUser:         http.StatusBadRequest,
 	derror.ErrUsernameMaxPerOrganization: http.StatusBadRequest,
-	derror.ErrUsernameInvalidCharacters:  http.StatusBadRequest,
 	derror.ErrUsernameNotReserved:        http.StatusBadRequest,
 
 	derror.ErrPasswordInvalid:     http.StatusBadRequest,

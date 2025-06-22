@@ -50,7 +50,7 @@ func (s *PasswordService) SavePassword(ctx context.Context, userID uuid.UUID, pa
 
 	id, err := uuid.NewV7()
 	if err != nil {
-		s.logger.Error("error at creating new uuid", "error", err)
+		s.logger.Error("Error encountered while creating new uuid", "error", err)
 
 		return &Password{}, derror.ErrInternalSystem
 	}
