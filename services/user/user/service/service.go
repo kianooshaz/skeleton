@@ -11,7 +11,7 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
 	suup "github.com/kianooshaz/skeleton/services/user/user/protocol"
-	"github.com/kianooshaz/skeleton/services/user/user/serivce/storage"
+	"github.com/kianooshaz/skeleton/services/user/user/service/storage"
 )
 
 type (
