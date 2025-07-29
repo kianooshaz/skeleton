@@ -28,14 +28,14 @@ func (s *Service) Assign(ctx context.Context, req aunp.AssignRequest) (aunp.User
 		return aunp.Username{}, derror.ErrUsernameInvalid
 	}
 
-	countValue, err := s.storage.Count(ctx, req.Username)
+	exist, err := s.storage.Exist(ctx, req.Username)
 	if err != nil {
 		s.logger.Error("Error encountered while getting count by username", slog.String("error", err.Error()))
 
 		return aunp.Username{}, derror.ErrInternalSystem
 	}
 
-	if countValue > 0 {
+	if exist {
 		return aunp.Username{}, derror.ErrUsernameCannotBeAssigned
 	}
 

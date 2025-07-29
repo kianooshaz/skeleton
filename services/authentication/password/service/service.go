@@ -1,57 +1,65 @@
-package service
+package authpass
 
 import (
-	"github.com/jackc/pgx/v5"
-	"github.com/kianooshaz/skeleton/foundation/log"
-	"github.com/kianooshaz/skeleton/foundation/postgres"
-	"github.com/kianooshaz/skeleton/services/authentication/password/service/stores/db"
+	"database/sql"
+	"log/slog"
+
+	"github.com/kianooshaz/skeleton/foundation/config"
+	"github.com/kianooshaz/skeleton/foundation/database/postgres"
+	authpassp "github.com/kianooshaz/skeleton/services/authentication/password/protocol"
+	"github.com/kianooshaz/skeleton/services/user/user/service/storage"
 )
 
 type (
 	Config struct {
-		MinLength                 uint   `yaml:"min_length"`
-		AllowCharacters           string `yaml:"allow_characters"`
-		Cost                      int    `yaml:"cost"`
-		CheckPasswordHistoryLimit int32  `yaml:"check_password_history_limit"`
+		MinLength                 uint     `yaml:"min_length"`
+		AllowCharacters           string   `yaml:"allow_characters"`
+		Cost                      int      `yaml:"cost"`
+		CheckPasswordHistoryLimit int32    `yaml:"check_password_history_limit"`
+		RequiredGuidelines        []string `yaml:"required_guidelines"`
+		BetterHave                []string `yaml:"better_have"`
 	}
 
-	PasswordService struct {
+	storer interface {
+	}
+
+	service struct {
 		config          Config
 		commonPasswords map[string]bool
-		logger          log.Logger
-		_pdb            postgres.DB
-		db              *db.Queries
+		logger          *slog.Logger
+		storage         storer
+		storageConn     *sql.DB
 	}
 )
 
-func New(
-	config Config,
-	commonPasswords []string,
-	logger log.Logger,
-	pdb postgres.DB,
-	db *db.Queries,
-) *PasswordService {
+var Service authpassp.PasswordServices
 
-	var commonPasswordsMap = make(map[string]bool)
-	for _, password := range commonPasswords {
-		commonPasswordsMap[password] = true
+func init() {
+	cfg, err := config.Load[Config]("authentication.password")
+	if err != nil {
+
 	}
 
-	return &PasswordService{
-		config:          config,
-		commonPasswords: commonPasswordsMap,
-		logger:          logger,
-		_pdb:            pdb,
-		db:              db,
-	}
-}
+	// TODO load common passwords from assets
 
-func (s *PasswordService) NewWithTx(tx pgx.Tx) *PasswordService {
-	return &PasswordService{
-		config:          s.config,
-		commonPasswords: s.commonPasswords,
-		logger:          s.logger,
-		_pdb:            s._pdb,
-		db:              db.New(tx),
+	// var commonPasswordsMap = make(map[string]bool)
+	// for _, password := range commonPasswords {
+	// 	commonPasswordsMap[password] = true
+	// }
+
+	s := &service{
+		config: cfg,
+		logger: slog.With(
+			slog.Group("package_info",
+				slog.String("module", "user"),
+				slog.String("service", "user"),
+			),
+		),
+		storage: &storage.UserStorage{
+			Conn: postgres.ConnectionPool,
+		},
+		storageConn: postgres.ConnectionPool,
 	}
+
+	Service = s
 }

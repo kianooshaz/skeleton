@@ -1,4 +1,4 @@
-package service
+package authpass
 
 import (
 	"context"
@@ -9,45 +9,48 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/kianooshaz/skeleton/foundation/derror"
-	"github.com/kianooshaz/skeleton/services/authentication/password/protocol"
+	authpassp "github.com/kianooshaz/skeleton/services/authentication/password/protocol"
 	"github.com/kianooshaz/skeleton/services/authentication/password/service/stores/db"
+	iop "github.com/kianooshaz/skeleton/services/identify/organization/protocol"
+	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
 	"golang.org/x/crypto/bcrypt"
 )
 
+
+func  (s *service) Verify(ctx, password string) error {
+	return nil
+}
+
 // SavePassword
-func (s *PasswordService) SavePassword(ctx context.Context, userID uuid.UUID, password string) (protocol.Password, error) {
-	if !s.evaluatePasswordStrength(password) {
-		return &Password{}, derror.ErrPasswordIsWeak
+func (s *service) Update(ctx, req authpassp.UpdateRequest) error {
+	// TODO check otp
+
+	if !s.evaluatePasswordStrength(req.NewPassword) {
+		return derror.ErrPasswordIsWeak
 	}
 
-	passwordHash, err := s.hashPassword(password)
+	passwordHash, err := s.hashPassword(req.NewPassword)
 	if err != nil {
 		s.logger.Error("failed to hash password", slog.String("error", err.Error()))
 
-		return &Password{}, err
+		return err
 	}
 
-	ok, err := s.checkPasswordHistory(ctx, userID, passwordHash)
+	used, err := s.usedBefore(ctx, req.UserID, req.OrganizationID, passwordHash)
 	if err != nil {
-		return &Password{}, err
+		return err
 	}
 
-	if ok {
-		return &Password{}, derror.ErrPasswordIsInHistory
+	if used {
+		return  derror.ErrPasswordUsedBefore
 	}
 
-	row, err := s.db.GetByUserID(ctx, userID)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-
-	}
-
-	if row.PasswordHash != "" {
+	
 		if err := s.db.Delete(ctx, row.ID); err != nil {
 			s.logger.Error("failed to delete old password", slog.String("error", err.Error()))
 
 			return &Password{}, err
 		}
-	}
 
 	id, err := uuid.NewV7()
 	if err != nil {
@@ -75,18 +78,19 @@ func (s *PasswordService) SavePassword(ctx context.Context, userID uuid.UUID, pa
 	}, nil
 }
 
-func (s *PasswordService) hashPassword(password string) (hash, error) {
+func (s *service) hashPassword(password string) (hash, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), s.config.Cost)
 	return hash(bytes), err
 }
 
 // VerifyPassword verifies if the given password matches the stored hash.
-func (s *PasswordService) verifyPassword(storedPassword hash, password string) bool {
+func (s *service) verifyPassword(storedPassword hash, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password))
 	return err == nil
 }
 
-func (s *PasswordService) checkPasswordHistory(ctx context.Context, userID uuid.UUID, password hash) (bool, error) {
+func (s *service) usedBefore(ctx context.Context, userID iup.UserID, organizationID iop.OrganizationID, hashed string) (bool, error) {
+
 	rows, err := s.db.History(ctx, db.HistoryParams{
 		UserID: userID,
 		Limit:  s.config.CheckPasswordHistoryLimit,
@@ -98,7 +102,7 @@ func (s *PasswordService) checkPasswordHistory(ctx context.Context, userID uuid.
 	}
 
 	for _, row := range rows {
-		if hash(row.PasswordHash) == password {
+		if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password)) {
 			return true, nil
 		}
 	}
@@ -106,7 +110,7 @@ func (s *PasswordService) checkPasswordHistory(ctx context.Context, userID uuid.
 	return false, nil
 }
 
-func (s *PasswordService) evaluatePasswordStrength(password string) bool {
+func (s *service) evaluatePasswordStrength(password string) bool {
 	if len(password) < 8 {
 		return false
 	}
@@ -129,11 +133,16 @@ func (s *PasswordService) evaluatePasswordStrength(password string) bool {
 	return true
 }
 
-// GetPasswordGuidelines
-func (s *PasswordService) GetPasswordGuidelines() string {
-	return ""
+func (s *service) Guidelines() (authpassp.GuidelinesResponse, error){
+	return authpassp.GuidelinesResponse{
+     Data: authpassp.Guidelines{
+		Required: s.config.RequiredGuidelines,
+		BetterHave: s.config.BetterHave,
+	 }
+	}
 }
 
-func (s *PasswordService) isPasswordCommon(password string) bool {
+func (s *service) isPasswordCommon(password string) bool {
 	return s.commonPasswords[password]
 }
+

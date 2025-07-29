@@ -25,7 +25,7 @@ var ErrUserAlreadyExists = errors.New("100102")
 var ErrPasswordInvalid = errors.New("100200")
 var ErrPasswordIsWeak = errors.New("100201")
 var ErrPasswordIsCommon = errors.New("100202")
-var ErrPasswordIsInHistory = errors.New("100203")
+var ErrPasswordUsedBefore = errors.New("100203")
 
 var ErrUsernameNotFound = errors.New("100300")
 var ErrUsernameInvalid = errors.New("100301")

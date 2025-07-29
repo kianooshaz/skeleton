@@ -58,8 +58,8 @@ var DerrorToHTTPStatus = map[error]int{
 	derror.ErrUsernameMaxPerOrganization: http.StatusBadRequest,
 	derror.ErrUsernameNotReserved:        http.StatusBadRequest,
 
-	derror.ErrPasswordInvalid:     http.StatusBadRequest,
-	derror.ErrPasswordIsWeak:      http.StatusBadRequest,
-	derror.ErrPasswordIsCommon:    http.StatusBadRequest,
-	derror.ErrPasswordIsInHistory: http.StatusBadRequest,
+	derror.ErrPasswordInvalid:    http.StatusBadRequest,
+	derror.ErrPasswordIsWeak:     http.StatusBadRequest,
+	derror.ErrPasswordIsCommon:   http.StatusBadRequest,
+	derror.ErrPasswordUsedBefore: http.StatusBadRequest,
 }
