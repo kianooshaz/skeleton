@@ -6,8 +6,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	dp "github.com/kianooshaz/skeleton/foundation/database/protocol"
-	fdp "github.com/kianooshaz/skeleton/foundation/database/protocol"
+	dbproto "github.com/kianooshaz/skeleton/foundation/database/proto"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/session"
 	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
@@ -15,7 +14,7 @@ import (
 )
 
 type UsernameStorage struct {
-	Conn dp.QueryExecutor
+	Conn dbproto.QueryExecutor
 }
 
 const create = `
@@ -66,7 +65,7 @@ func (us *UsernameStorage) Get(ctx context.Context, id uuid.UUID) (usernameproto
 		Scan(&username.ID, &username.Username, &username.AccountID, &username.Status, &username.CreatedAt, &username.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return usernameproto.Username{}, fdp.ErrRowNotFound
+			return usernameproto.Username{}, dbproto.ErrRowNotFound
 		}
 		return usernameproto.Username{}, err
 	}
@@ -129,7 +128,7 @@ func (us *UsernameStorage) CountWithSearch(ctx context.Context, req usernameprot
 	err := conn.QueryRowContext(ctx, CountWithSearch, req.AccountID).Scan(&count)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, fdp.ErrRowNotFound
+			return 0, dbproto.ErrRowNotFound
 		}
 		return 0, err
 	}

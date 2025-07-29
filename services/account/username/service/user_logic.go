@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	fdp "github.com/kianooshaz/skeleton/foundation/database/protocol"
+	dbproto "github.com/kianooshaz/skeleton/foundation/database/proto"
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/session"
@@ -105,7 +105,10 @@ func (s *Service) Unassigned(ctx context.Context, id uuid.UUID) error {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return derror.ErrUsernameNotFound
 		}
-		s.logger.Error("Error encountered while getting username from database", "username", id, slog.String("error", err.Error()))
+		s.logger.Error(
+			"Error encountered while getting username from database",
+			"id", id,
+			slog.String("error", err.Error()))
 		return derror.ErrInternalSystem
 	}
 
@@ -123,16 +126,25 @@ func (s *Service) Unassigned(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *Service) ListAssigned(ctx context.Context, req usernameproto.ListAssignedRequest) (usernameproto.ListAssignedResponse, error) {
+func (s *Service) ListAssigned(ctx context.Context, req usernameproto.ListAssignedRequest) (
+	usernameproto.ListAssignedResponse, error) {
 	usernames, err := s.storage.ListByUserAndOrganization(ctx, req)
 	if err != nil {
-		s.logger.Error("Error encountered while listing assigned usernames", "accountID", req.AccountID, slog.String("error", err.Error()))
+		s.logger.Error(
+			"Error encountered while listing assigned usernames",
+			"accountID", req.AccountID,
+			slog.String("error", err.Error()),
+		)
 		return usernameproto.ListAssignedResponse{}, derror.ErrInternalSystem
 	}
 
 	count, err := s.storage.CountByAccount(ctx, req.AccountID)
 	if err != nil {
-		s.logger.Error("Error encountered while counting assigned usernames", "accountID", req.AccountID, slog.String("error", err.Error()))
+		s.logger.Error(
+			"Error encountered while counting assigned usernames",
+			"accountID", req.AccountID,
+			slog.String("error", err.Error()),
+		)
 		return usernameproto.ListAssignedResponse{}, derror.ErrInternalSystem
 	}
 
@@ -160,7 +172,7 @@ func (s *Service) ListAssigned(ctx context.Context, req usernameproto.ListAssign
 func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 	shouldBePrimary, err := s.storage.Get(ctx, id)
 	if err != nil {
-		if errors.Is(err, fdp.ErrRowNotFound) {
+		if errors.Is(err, dbproto.ErrRowNotFound) {
 			return derror.ErrUsernameNotFound
 		}
 		s.logger.Error("Error encountered while fetching username from db", slog.String("error", err.Error()))
@@ -200,7 +212,11 @@ func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 			username.Status.Add(Primary)
 
 			if err := s.storage.UpdateStatus(ctx, username); err != nil {
-				s.logger.Error("Error encountered while adding primary status to username", slog.String("error", err.Error()))
+				s.logger.Error(
+					"Error encountered while adding primary status to username",
+					slog.String("error", err.Error()),
+					slog.Any("username", username),
+				)
 
 				return derror.ErrInternalSystem
 			}
@@ -210,7 +226,11 @@ func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 			username.Status.Remove(Primary)
 
 			if err := s.storage.UpdateStatus(ctx, username); err != nil {
-				s.logger.Error("Error encountered while adding deleting status to username", slog.String("error", err.Error()))
+				s.logger.Error(
+					"Error encountered while adding deleting status to username",
+					slog.String("error", err.Error()),
+					slog.Any("username", username),
+				)
 
 				return derror.ErrInternalSystem
 			}
@@ -219,7 +239,10 @@ func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		s.logger.Error("Error encountered while committing transaction", slog.String("error", err.Error()))
+		s.logger.Error(
+			"Error encountered while committing transaction",
+			slog.String("error", err.Error()),
+		)
 
 		return derror.ErrInternalSystem
 	}

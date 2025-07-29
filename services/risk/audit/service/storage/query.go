@@ -3,13 +3,13 @@ package storage
 import (
 	"context"
 
-	dp "github.com/kianooshaz/skeleton/foundation/database/protocol"
+	dbproto "github.com/kianooshaz/skeleton/foundation/database/proto"
 	"github.com/kianooshaz/skeleton/foundation/session"
 	ap "github.com/kianooshaz/skeleton/services/risk/audit/protocol"
 )
 
 type AuditStorage struct {
-	Conn dp.QueryExecutor
+	Conn dbproto.QueryExecutor
 }
 
 const create = `

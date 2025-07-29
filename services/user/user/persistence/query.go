@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	dp "github.com/kianooshaz/skeleton/foundation/database/protocol"
+	dbproto "github.com/kianooshaz/skeleton/foundation/database/proto"
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
@@ -14,7 +14,7 @@ import (
 )
 
 type UserStorage struct {
-	Conn dp.QueryExecutor
+	Conn dbproto.QueryExecutor
 }
 
 const create = `

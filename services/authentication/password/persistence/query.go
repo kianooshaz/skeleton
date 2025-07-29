@@ -6,8 +6,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	dp "github.com/kianooshaz/skeleton/foundation/database/protocol"
-	fdp "github.com/kianooshaz/skeleton/foundation/database/protocol"
+	dbproto "github.com/kianooshaz/skeleton/foundation/database/proto"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/session"
 	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
@@ -15,7 +14,7 @@ import (
 )
 
 type PasswordStorage struct {
-	Conn dp.QueryExecutor
+	Conn dbproto.QueryExecutor
 }
 
 const create = `
@@ -66,7 +65,7 @@ func (ps *PasswordStorage) Get(ctx context.Context, id uuid.UUID) (passwordproto
 		Scan(&password.ID, &password.AccountID, &password.PasswordHash, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return passwordproto.Password{}, fdp.ErrRowNotFound
+			return passwordproto.Password{}, dbproto.ErrRowNotFound
 		}
 		return passwordproto.Password{}, err
 	}
@@ -91,7 +90,7 @@ func (ps *PasswordStorage) GetByAccountID(ctx context.Context, accountID accprot
 		Scan(&password.ID, &password.AccountID, &password.PasswordHash, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return passwordproto.Password{}, fdp.ErrRowNotFound
+			return passwordproto.Password{}, dbproto.ErrRowNotFound
 		}
 		return passwordproto.Password{}, err
 	}
@@ -153,7 +152,7 @@ func (ps *PasswordStorage) CountWithSearch(ctx context.Context, req passwordprot
 	err := conn.QueryRowContext(ctx, CountWithSearch, req.AccountID).Scan(&count)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, fdp.ErrRowNotFound
+			return 0, dbproto.ErrRowNotFound
 		}
 		return 0, err
 	}

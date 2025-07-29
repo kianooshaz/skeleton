@@ -1,4 +1,4 @@
-package fdp
+package dbproto
 
 import (
 	"context"

@@ -8,7 +8,7 @@ import (
 	"unicode"
 
 	"github.com/google/uuid"
-	fdp "github.com/kianooshaz/skeleton/foundation/database/protocol"
+	dbproto "github.com/kianooshaz/skeleton/foundation/database/proto"
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	accproto "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
@@ -25,7 +25,7 @@ func (s *Service) Verify(ctx context.Context, password string) error {
 func (s *Service) Get(ctx context.Context, id uuid.UUID) (passwordproto.Password, error) {
 	password, err := s.storage.Get(ctx, id)
 	if err != nil {
-		if errors.Is(err, fdp.ErrRowNotFound) {
+		if errors.Is(err, dbproto.ErrRowNotFound) {
 			return passwordproto.Password{}, derror.ErrPasswordNotFound
 		}
 
@@ -87,7 +87,7 @@ func (s *Service) Update(ctx context.Context, req passwordproto.UpdateRequest) e
 
 	// Get existing password to delete it
 	existingPassword, err := s.storage.GetByAccountID(ctx, req.AccountID)
-	if err != nil && !errors.Is(err, fdp.ErrRowNotFound) {
+	if err != nil && !errors.Is(err, dbproto.ErrRowNotFound) {
 		s.logger.Error("failed to get existing password", slog.String("error", err.Error()))
 		return derror.ErrInternalSystem
 	}

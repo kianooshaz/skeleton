@@ -6,7 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
-	fdp "github.com/kianooshaz/skeleton/foundation/database/protocol"
+	dbproto "github.com/kianooshaz/skeleton/foundation/database/proto"
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/stat"
@@ -16,7 +16,7 @@ import (
 func (s *Service) Get(ctx context.Context, id uuid.UUID) (aunp.Username, error) {
 	username, err := s.storage.Get(ctx, id)
 	if err != nil {
-		if errors.Is(err, fdp.ErrRowNotFound) {
+		if errors.Is(err, dbproto.ErrRowNotFound) {
 			return aunp.Username{}, derror.ErrUsernameNotFound
 		}
 
@@ -30,14 +30,22 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID) (aunp.Username, error) 
 func (s *Service) List(ctx context.Context, req aunp.ListRequest) (aunp.ListResponse, error) {
 	usernames, err := s.storage.ListWithSearch(ctx, req)
 	if err != nil {
-		s.logger.Error("Error encountered while searching usernames", slog.String("error", err.Error()), slog.Any("request", req))
+		s.logger.Error(
+			"Error encountered while searching usernames",
+			slog.String("error", err.Error()),
+			slog.Any("request", req),
+		)
 
 		return aunp.ListResponse{}, derror.ErrInternalSystem
 	}
 
 	count, err := s.storage.CountWithSearch(ctx, req)
 	if err != nil {
-		s.logger.Error("Error encountered while counting usernames", slog.String("error", err.Error()), slog.Any("request", req))
+		s.logger.Error(
+			"Error encountered while counting usernames",
+			slog.String("error", err.Error()),
+			slog.Any("request", req),
+		)
 
 		return aunp.ListResponse{}, derror.ErrInternalSystem
 	}
