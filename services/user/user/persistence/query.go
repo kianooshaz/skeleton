@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"errors"
 
 	dbproto "github.com/kianooshaz/skeleton/foundation/database/proto"
@@ -17,37 +18,31 @@ type UserStorage struct {
 	Conn dbproto.QueryExecutor
 }
 
-const create = `
-	INSERT INTO users (
-		id
-		created_at
-	) VALUES (
-		$1
-		$2
-	)
-`
+const defaultPageSize = 20
+
+//go:embed queries/create.sql
+var createQuery string
+
+//go:embed queries/get.sql
+var getQuery string
+
+//go:embed queries/list.sql
+var listQuery string
+
+//go:embed queries/count.sql
+var countQuery string
 
 func (us *UserStorage) Create(ctx context.Context, user userproto.User) error {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
-	_, err := conn.ExecContext(ctx, create, user.ID, user.CreatedAt)
+	_, err := conn.ExecContext(ctx, createQuery, user.ID, user.CreatedAt)
 	return err
 }
-
-const get = `
-	SELECT
-		id
-		created_at
-	FROM
-		users
-	WHERE
-		id = $1
-`
 
 func (us *UserStorage) Get(ctx context.Context, id userproto.UserID) (userproto.User, error) {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
-	row := conn.QueryRowContext(ctx, get, id)
+	row := conn.QueryRowContext(ctx, getQuery, id)
 
 	var user userproto.User
 	err := row.Scan(&user.ID, &user.CreatedAt)
@@ -62,20 +57,13 @@ func (us *UserStorage) Get(ctx context.Context, id userproto.UserID) (userproto.
 	return user, err
 }
 
-const list = `
-	SELECT
-		id
-		created_at
-	FROM
-		users
-`
-
-func (us *UserStorage) List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]userproto.User, error) {
+func (us *UserStorage) List(ctx context.Context, page pagination.Page,
+	orderBy order.OrderBy) ([]userproto.User, error) {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
-	list := list + page.String(pagination.SQLStringer(20)) + orderBy.String(oderStringer)
+	query := listQuery + page.String(pagination.SQLStringer(defaultPageSize)) + orderBy.String(oderStringer)
 
-	rows, err := conn.QueryContext(ctx, list)
+	rows, err := conn.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -94,15 +82,8 @@ func (us *UserStorage) List(ctx context.Context, page pagination.Page, orderBy o
 	return users, nil
 }
 
-const count = `
-	SELECT
-		COUNT(*)
-	FROM
-		users
-`
-
 func (us *UserStorage) Count(ctx context.Context) (int, error) {
-	row := us.Conn.QueryRowContext(ctx, count)
+	row := us.Conn.QueryRowContext(ctx, countQuery)
 	var count int
 	err := row.Scan(&count)
 	return count, err

@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"errors"
 
 	"github.com/google/uuid"
@@ -17,51 +18,48 @@ type PasswordStorage struct {
 	Conn dbproto.QueryExecutor
 }
 
-const create = `
-	INSERT INTO passwords (
-    	id, account_id, password_hash, created_at, updated_at, deleted_at
-	) VALUES (
-        $1, $2, $3, NOW(), NOW(), NULL
-    )
-`
+const defaultPageSize = 20
+
+//go:embed queries/create.sql
+var createQuery string
+
+//go:embed queries/delete.sql
+var deletePasswordQuery string
+
+//go:embed queries/get.sql
+var getQuery string
+
+//go:embed queries/get_by_account_id.sql
+var getByAccountIDQuery string
+
+//go:embed queries/list_by_account.sql
+var listByAccountQuery string
+
+//go:embed queries/count_with_search.sql
+var countWithSearchQuery string
+
+//go:embed queries/history.sql
+var historyQuery string
 
 func (ps *PasswordStorage) Create(ctx context.Context, password passwordproto.Password) error {
 	conn := session.GetDBConnection(ctx, ps.Conn)
 
-	_, err := conn.ExecContext(ctx, create, password.ID, password.AccountID, password.PasswordHash)
+	_, err := conn.ExecContext(ctx, createQuery, password.ID, password.AccountID, password.PasswordHash)
 	return err
 }
-
-const deletePassword = `
-	UPDATE
-		passwords
-	SET 
-    	deleted_at = NOW()
-	WHERE
-		id = $1 AND deleted_at IS NULL
-`
 
 func (ps *PasswordStorage) Delete(ctx context.Context, id uuid.UUID) error {
 	conn := session.GetDBConnection(ctx, ps.Conn)
 
-	_, err := conn.ExecContext(ctx, deletePassword, id)
+	_, err := conn.ExecContext(ctx, deletePasswordQuery, id)
 	return err
 }
-
-const get = `
-	SELECT
-		id, account_id, password_hash, created_at, updated_at
-	FROM
-		passwords
-	WHERE
-		id = $1 AND deleted_at IS NULL
-`
 
 func (ps *PasswordStorage) Get(ctx context.Context, id uuid.UUID) (passwordproto.Password, error) {
 	conn := session.GetDBConnection(ctx, ps.Conn)
 
 	var password passwordproto.Password
-	err := conn.QueryRowContext(ctx, get, id).
+	err := conn.QueryRowContext(ctx, getQuery, id).
 		Scan(&password.ID, &password.AccountID, &password.PasswordHash, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -72,21 +70,12 @@ func (ps *PasswordStorage) Get(ctx context.Context, id uuid.UUID) (passwordproto
 
 	return password, nil
 }
-
-const getByAccountID = `
-	SELECT
-		id, account_id, password_hash, created_at, updated_at
-	FROM
-		passwords
-	WHERE
-		account_id = $1 AND deleted_at IS NULL
-`
 
 func (ps *PasswordStorage) GetByAccountID(ctx context.Context, accountID accprotocol.AccountID) (passwordproto.Password, error) {
 	conn := session.GetDBConnection(ctx, ps.Conn)
 
 	var password passwordproto.Password
-	err := conn.QueryRowContext(ctx, getByAccountID, accountID).
+	err := conn.QueryRowContext(ctx, getByAccountIDQuery, accountID).
 		Scan(&password.ID, &password.AccountID, &password.PasswordHash, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -98,19 +87,10 @@ func (ps *PasswordStorage) GetByAccountID(ctx context.Context, accountID accprot
 	return password, nil
 }
 
-const listByAccount = `
-	SELECT
-		id, account_id, password_hash, created_at, updated_at
-	FROM
-		passwords
-	WHERE
-		account_id = $1 AND deleted_at IS NULL
-`
-
 func (ps *PasswordStorage) ListWithSearch(ctx context.Context, req passwordproto.ListRequest) ([]passwordproto.Password, error) {
 	conn := session.GetDBConnection(ctx, ps.Conn)
 
-	query := listByAccount + req.OrderBy.String(oderStringer) + req.Page.String(pagination.SQLStringer(20))
+	query := listByAccountQuery + req.OrderBy.String(oderStringer) + req.Page.String(pagination.SQLStringer(defaultPageSize))
 
 	rows, err := conn.QueryContext(ctx, query, req.AccountID)
 	if err != nil {
@@ -136,20 +116,11 @@ func (ps *PasswordStorage) ListWithSearch(ctx context.Context, req passwordproto
 	return passwords, nil
 }
 
-const CountWithSearch = `
-	SELECT
-		COUNT(id)
-	FROM	
-		passwords
-	WHERE
-		account_id = $1 AND deleted_at IS NULL
-`
-
 func (ps *PasswordStorage) CountWithSearch(ctx context.Context, req passwordproto.ListRequest) (int64, error) {
 	conn := session.GetDBConnection(ctx, ps.Conn)
 
 	var count int64
-	err := conn.QueryRowContext(ctx, CountWithSearch, req.AccountID).Scan(&count)
+	err := conn.QueryRowContext(ctx, countWithSearchQuery, req.AccountID).Scan(&count)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, dbproto.ErrRowNotFound
@@ -160,21 +131,10 @@ func (ps *PasswordStorage) CountWithSearch(ctx context.Context, req passwordprot
 	return count, nil
 }
 
-const history = `
-	SELECT
-		id, account_id, password_hash, created_at, updated_at
-	FROM
-		passwords
-	WHERE
-		account_id = $1 AND deleted_at IS NULL
-	ORDER BY created_at DESC
-	LIMIT $2
-`
-
 func (ps *PasswordStorage) History(ctx context.Context, accountID accprotocol.AccountID, limit int32) ([]passwordproto.Password, error) {
 	conn := session.GetDBConnection(ctx, ps.Conn)
 
-	rows, err := conn.QueryContext(ctx, history, accountID, limit)
+	rows, err := conn.QueryContext(ctx, historyQuery, accountID, limit)
 	if err != nil {
 		return nil, err
 	}
