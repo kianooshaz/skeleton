@@ -1,4 +1,4 @@
-package storage
+package persistence
 
 import "github.com/kianooshaz/skeleton/foundation/order"
 
@@ -7,8 +7,8 @@ var oderStringer order.StringerFunc = func(orderBy order.OrderBy) string {
 	switch orderBy.Field {
 	case "created_at":
 		field = "created_at"
-	case "organization_id":
-		field = "organization_id"
+	case "account_id":
+		field = "account_id"
 	default:
 		field = "created_at"
 	}

@@ -9,27 +9,26 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
-	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
-	uup "github.com/kianooshaz/skeleton/services/user/user/protocol"
-	"github.com/kianooshaz/skeleton/services/user/user/service/storage"
+	"github.com/kianooshaz/skeleton/services/user/user/persistence"
+	userproto "github.com/kianooshaz/skeleton/services/user/user/proto"
 )
 
 type (
-	storer interface {
-		Create(ctx context.Context, user uup.User) error
-		Get(ctx context.Context, id iup.UserID) (uup.User, error)
-		List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]uup.User, error)
+	persister interface {
+		Create(ctx context.Context, user userproto.User) error
+		Get(ctx context.Context, id userproto.UserID) (userproto.User, error)
+		List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]userproto.User, error)
 		Count(ctx context.Context) (int, error)
 	}
 
 	service struct {
-		logger      *slog.Logger
-		storage     storer
-		storageConn *sql.DB
+		logger    *slog.Logger
+		persister persister
+		dbConn    *sql.DB
 	}
 )
 
-var Service uup.UserService = &service{}
+var Service userproto.UserService = &service{}
 
 func init() {
 	Service = &service{
@@ -39,9 +38,9 @@ func init() {
 				slog.String("service", "user"),
 			),
 		),
-		storage: &storage.UserStorage{
+		persister: &persistence.UserStorage{
 			Conn: postgres.ConnectionPool,
 		},
-		storageConn: postgres.ConnectionPool,
+		dbConn: postgres.ConnectionPool,
 	}
 }

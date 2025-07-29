@@ -5,13 +5,12 @@ import (
 	"database/sql"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/kianooshaz/skeleton/foundation/config"
 	"github.com/kianooshaz/skeleton/foundation/database/postgres"
-	aunp "github.com/kianooshaz/skeleton/services/account/username/protocol"
-	"github.com/kianooshaz/skeleton/services/account/username/service/storage"
-	iop "github.com/kianooshaz/skeleton/services/identify/organization/protocol"
-	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
-	iunp "github.com/kianooshaz/skeleton/services/identify/username/protocol"
+	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
+	"github.com/kianooshaz/skeleton/services/account/username/persistence"
+	aunp "github.com/kianooshaz/skeleton/services/account/username/proto"
 )
 
 var UsernameService aunp.UsernameService = &Service{}
@@ -26,15 +25,15 @@ type (
 
 	Storer interface {
 		Create(ctx context.Context, username aunp.Username) error
-		Delete(ctx context.Context, id iunp.Username) error
-		Get(ctx context.Context, id iunp.Username) (aunp.Username, error)
+		Delete(ctx context.Context, id uuid.UUID) error
+		Get(ctx context.Context, id uuid.UUID) (aunp.Username, error)
 		ListWithSearch(ctx context.Context, req aunp.ListRequest) ([]aunp.Username, error)
 		CountWithSearch(ctx context.Context, req aunp.ListRequest) (int64, error)
 
 		ListByUserAndOrganization(ctx context.Context, req aunp.ListAssignedRequest) ([]aunp.Username, error)
 		UpdateStatus(ctx context.Context, username aunp.Username) error
-		Exist(ctx context.Context, username iunp.Username) (bool, error)
-		CountByUserAndOrganization(ctx context.Context, userID iup.UserID, organizationID iop.OrganizationID) (int64, error)
+		Exist(ctx context.Context, username string) (bool, error)
+		CountByAccount(ctx context.Context, accountID accprotocol.AccountID) (int64, error)
 	}
 
 	Service struct {
@@ -59,7 +58,7 @@ func init() {
 				slog.String("service", "account"),
 			),
 		),
-		storage: &storage.UsernameStorage{
+		storage: &persistence.UsernameStorage{
 			Conn: postgres.ConnectionPool,
 		},
 	}

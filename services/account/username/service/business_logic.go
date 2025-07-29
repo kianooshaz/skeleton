@@ -5,15 +5,15 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/google/uuid"
 	fdp "github.com/kianooshaz/skeleton/foundation/database/protocol"
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/stat"
-	aunp "github.com/kianooshaz/skeleton/services/account/username/protocol"
-	iunp "github.com/kianooshaz/skeleton/services/identify/username/protocol"
+	aunp "github.com/kianooshaz/skeleton/services/account/username/proto"
 )
 
-func (s *Service) Get(ctx context.Context, id iunp.Username) (aunp.Username, error) {
+func (s *Service) Get(ctx context.Context, id uuid.UUID) (aunp.Username, error) {
 	username, err := s.storage.Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, fdp.ErrRowNotFound) {
@@ -45,14 +45,13 @@ func (s *Service) List(ctx context.Context, req aunp.ListRequest) (aunp.ListResp
 	result := make([]aunp.ListUsername, 0, len(usernames))
 	for _, username := range usernames {
 		result = append(result, aunp.ListUsername{
-			ID:             username.ID,
-			Username:       username.Username,
-			UserID:         username.UserID,
-			OrganizationID: username.OrganizationID,
-			Primary:        username.Status.Has(stat.Primary),
-			Locked:         username.Status.Has(stat.Locked),
-			Blocked:        username.Status.Has(stat.Blocked),
-			Reserved:       username.Status.Has(stat.Reserved),
+			ID:        username.ID,
+			Username:  username.Username,
+			AccountID: username.AccountID,
+			Primary:   username.Status.Has(stat.Primary),
+			Locked:    username.Status.Has(stat.Locked),
+			Blocked:   username.Status.Has(stat.Blocked),
+			Reserved:  username.Status.Has(stat.Reserved),
 		})
 	}
 

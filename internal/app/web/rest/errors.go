@@ -62,4 +62,5 @@ var DerrorToHTTPStatus = map[error]int{
 	derror.ErrPasswordIsWeak:     http.StatusBadRequest,
 	derror.ErrPasswordIsCommon:   http.StatusBadRequest,
 	derror.ErrPasswordUsedBefore: http.StatusBadRequest,
+	derror.ErrPasswordNotFound:   http.StatusNotFound,
 }

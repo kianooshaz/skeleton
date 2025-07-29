@@ -1,4 +1,4 @@
-package iup
+package userproto
 
 import "github.com/google/uuid"
 

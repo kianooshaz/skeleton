@@ -1,4 +1,4 @@
-package iop
+package orgproto
 
 import "github.com/google/uuid"
 

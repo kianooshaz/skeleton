@@ -1,4 +1,4 @@
-package uup
+package userproto
 
 import (
 	"context"
@@ -6,12 +6,11 @@ import (
 
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
-	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
 )
 
 type User struct {
-	ID        iup.UserID `json:"id"`
-	CreatedAt time.Time  `json:"created_at"`
+	ID        UserID    `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type UserService interface {
@@ -25,7 +24,7 @@ type CreateResponse struct {
 }
 
 type GetRequest struct {
-	ID iup.UserID `json:"query"`
+	ID UserID `json:"query"`
 }
 
 type GetResponse struct {

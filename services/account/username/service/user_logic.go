@@ -13,35 +13,33 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/session"
 	"github.com/kianooshaz/skeleton/foundation/stat"
-	aunp "github.com/kianooshaz/skeleton/services/account/username/protocol"
-	iop "github.com/kianooshaz/skeleton/services/identify/organization/protocol"
-	iup "github.com/kianooshaz/skeleton/services/identify/user/protocol"
-	iunp "github.com/kianooshaz/skeleton/services/identify/username/protocol"
+	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
+	usernameproto "github.com/kianooshaz/skeleton/services/account/username/proto"
 )
 
-func (s *Service) Assign(ctx context.Context, req aunp.AssignRequest) (aunp.Username, error) {
+func (s *Service) Assign(ctx context.Context, req usernameproto.AssignRequest) (usernameproto.Username, error) {
 	if len(req.Username) < int(s.config.MinLength) || len(req.Username) > int(s.config.MaxLength) {
-		return aunp.Username{}, derror.ErrUsernameInvalid
+		return usernameproto.Username{}, derror.ErrUsernameInvalid
 	}
 
 	if !s.isValidUsername(req.Username) {
-		return aunp.Username{}, derror.ErrUsernameInvalid
+		return usernameproto.Username{}, derror.ErrUsernameInvalid
 	}
 
 	exist, err := s.storage.Exist(ctx, req.Username)
 	if err != nil {
 		s.logger.Error("Error encountered while getting count by username", slog.String("error", err.Error()))
 
-		return aunp.Username{}, derror.ErrInternalSystem
+		return usernameproto.Username{}, derror.ErrInternalSystem
 	}
 
 	if exist {
-		return aunp.Username{}, derror.ErrUsernameCannotBeAssigned
+		return usernameproto.Username{}, derror.ErrUsernameCannotBeAssigned
 	}
 
-	shouldBePrimary, err := s.checkUserOrganizationMax(ctx, req.UserID, req.OrganizationID)
+	shouldBePrimary, err := s.checkAccountMax(ctx, req.AccountID)
 	if err != nil {
-		return aunp.Username{}, err
+		return usernameproto.Username{}, err
 	}
 
 	status := stat.Unset
@@ -52,28 +50,27 @@ func (s *Service) Assign(ctx context.Context, req aunp.AssignRequest) (aunp.User
 	id, err := uuid.NewV7()
 	if err != nil {
 		s.logger.Error("Error encountered while generating username id", slog.String("error", err.Error()))
-		return aunp.Username{}, derror.ErrInternalSystem
+		return usernameproto.Username{}, derror.ErrInternalSystem
 	}
 
-	username := aunp.Username{
-		ID:             id,
-		Username:       req.Username,
-		UserID:         req.UserID,
-		OrganizationID: req.OrganizationID,
-		Status:         status,
+	username := usernameproto.Username{
+		ID:        id,
+		Username:  req.Username,
+		AccountID: req.AccountID,
+		Status:    status,
 	}
 
 	err = s.storage.Create(ctx, username)
 	if err != nil {
 		s.logger.Error("Error encountered while creating username in database", slog.String("error", err.Error()))
 
-		return aunp.Username{}, derror.ErrInternalSystem
+		return usernameproto.Username{}, derror.ErrInternalSystem
 	}
 
 	return username, nil
 }
 
-func (s *Service) isValidUsername(value iunp.Username) bool {
+func (s *Service) isValidUsername(value string) bool {
 	for _, char := range value {
 		if !strings.ContainsRune(s.config.AllowCharacters, char) {
 			return false
@@ -87,22 +84,22 @@ func (s *Service) isValidUsername(value iunp.Username) bool {
 	return true
 }
 
-func (s *Service) checkUserOrganizationMax(ctx context.Context, userID iup.UserID, organizationID iop.OrganizationID) (bool, error) {
-	countByOrganization, err := s.storage.CountByUserAndOrganization(ctx, userID, organizationID)
+func (s *Service) checkAccountMax(ctx context.Context, accountID accprotocol.AccountID) (bool, error) {
+	countByAccount, err := s.storage.CountByAccount(ctx, accountID)
 	if err != nil {
-		s.logger.Error("Error encountered while getting count by user and organization", slog.String("error", err.Error()))
+		s.logger.Error("Error encountered while getting count by account", slog.String("error", err.Error()))
 		return false, derror.ErrInternalSystem
 	}
-	if countByOrganization > int64(s.config.MaxUserUsernamePerOrganization) {
+	if countByAccount > int64(s.config.MaxUserUsernamePerOrganization) {
 		return false, derror.ErrUsernameMaxPerOrganization
 	}
 
-	shouldBePrimary := countByOrganization == 0
+	shouldBePrimary := countByAccount == 0
 
 	return shouldBePrimary, nil
 }
 
-func (s *Service) Unassigned(ctx context.Context, id iunp.Username) error {
+func (s *Service) Unassigned(ctx context.Context, id uuid.UUID) error {
 	username, err := s.storage.Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -126,42 +123,41 @@ func (s *Service) Unassigned(ctx context.Context, id iunp.Username) error {
 	return nil
 }
 
-func (s *Service) ListAssigned(ctx context.Context, req aunp.ListAssignedRequest) (aunp.ListAssignedResponse, error) {
+func (s *Service) ListAssigned(ctx context.Context, req usernameproto.ListAssignedRequest) (usernameproto.ListAssignedResponse, error) {
 	usernames, err := s.storage.ListByUserAndOrganization(ctx, req)
 	if err != nil {
-		s.logger.Error("Error encountered while listing assigned usernames", "userID", req.UserID, "organizationID", req.OrganizationID, slog.String("error", err.Error()))
-		return aunp.ListAssignedResponse{}, derror.ErrInternalSystem
+		s.logger.Error("Error encountered while listing assigned usernames", "accountID", req.AccountID, slog.String("error", err.Error()))
+		return usernameproto.ListAssignedResponse{}, derror.ErrInternalSystem
 	}
 
-	count, err := s.storage.CountByUserAndOrganization(ctx, req.UserID, req.OrganizationID)
+	count, err := s.storage.CountByAccount(ctx, req.AccountID)
 	if err != nil {
-		s.logger.Error("Error encountered while counting assigned usernames", "userID", req.UserID, "organizationID", req.OrganizationID, slog.String("error", err.Error()))
-		return aunp.ListAssignedResponse{}, derror.ErrInternalSystem
+		s.logger.Error("Error encountered while counting assigned usernames", "accountID", req.AccountID, slog.String("error", err.Error()))
+		return usernameproto.ListAssignedResponse{}, derror.ErrInternalSystem
 	}
 
-	result := make([]aunp.ListUsername, 0, len(usernames))
+	result := make([]usernameproto.ListUsername, 0, len(usernames))
 	for _, username := range usernames {
 		if username.Status.Has(stat.Blocked) {
 			count--
 			continue
 		}
 
-		result = append(result, aunp.ListUsername{
-			ID:             username.ID,
-			Username:       username.Username,
-			UserID:         username.UserID,
-			OrganizationID: username.OrganizationID,
-			Primary:        username.Status.Has(stat.Primary),
-			Locked:         username.Status.Has(stat.Locked),
-			Blocked:        username.Status.Has(stat.Blocked),
-			Reserved:       username.Status.Has(stat.Reserved),
+		result = append(result, usernameproto.ListUsername{
+			ID:        username.ID,
+			Username:  username.Username,
+			AccountID: username.AccountID,
+			Primary:   username.Status.Has(stat.Primary),
+			Locked:    username.Status.Has(stat.Locked),
+			Blocked:   username.Status.Has(stat.Blocked),
+			Reserved:  username.Status.Has(stat.Reserved),
 		})
 	}
 
-	return aunp.ListAssignedResponse(pagination.NewResponse(req.Page, int(count), result)), nil
+	return usernameproto.ListAssignedResponse(pagination.NewResponse(req.Page, int(count), result)), nil
 }
 
-func (s *Service) BePrimary(ctx context.Context, id iunp.Username) error {
+func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 	shouldBePrimary, err := s.storage.Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, fdp.ErrRowNotFound) {
@@ -171,9 +167,8 @@ func (s *Service) BePrimary(ctx context.Context, id iunp.Username) error {
 		return derror.ErrInternalSystem
 	}
 
-	usernames, err := s.storage.ListByUserAndOrganization(ctx, aunp.ListAssignedRequest{
-		UserID:         shouldBePrimary.UserID,
-		OrganizationID: shouldBePrimary.OrganizationID,
+	usernames, err := s.storage.ListByUserAndOrganization(ctx, usernameproto.ListAssignedRequest{
+		AccountID: shouldBePrimary.AccountID,
 		Page: pagination.Page{
 			PageNumber: s.config.MaxUserUsernamePerOrganization, // We only need to fetch the usernames to update their status
 		},

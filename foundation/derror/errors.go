@@ -26,6 +26,7 @@ var ErrPasswordInvalid = errors.New("100200")
 var ErrPasswordIsWeak = errors.New("100201")
 var ErrPasswordIsCommon = errors.New("100202")
 var ErrPasswordUsedBefore = errors.New("100203")
+var ErrPasswordNotFound = errors.New("100204")
 
 var ErrUsernameNotFound = errors.New("100300")
 var ErrUsernameInvalid = errors.New("100301")
@@ -38,3 +39,5 @@ var ErrUsernameAlreadyExists = errors.New("100307")
 var ErrUsernameRequired = errors.New("100308")
 
 var ErrOrganizationIDRequired = errors.New("100400")
+
+var ErrAccountIDRequired = errors.New("100500")
