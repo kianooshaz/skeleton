@@ -39,14 +39,22 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID) (passwordproto.Password
 func (s *Service) List(ctx context.Context, req passwordproto.ListRequest) (passwordproto.ListResponse, error) {
 	passwords, err := s.storage.ListWithSearch(ctx, req)
 	if err != nil {
-		s.logger.Error("Error encountered while searching passwords", slog.String("error", err.Error()), slog.Any("request", req))
+		s.logger.Error(
+			"Error encountered while searching passwords",
+			slog.String("error", err.Error()),
+			slog.Any("request", req),
+		)
 
 		return passwordproto.ListResponse{}, derror.ErrInternalSystem
 	}
 
 	count, err := s.storage.CountWithSearch(ctx, req)
 	if err != nil {
-		s.logger.Error("Error encountered while counting passwords", slog.String("error", err.Error()), slog.Any("request", req))
+		s.logger.Error(
+			"Error encountered while counting passwords",
+			slog.String("error", err.Error()),
+			slog.Any("request", req),
+		)
 
 		return passwordproto.ListResponse{}, derror.ErrInternalSystem
 	}
@@ -144,7 +152,7 @@ func (s *Service) usedBefore(ctx context.Context, accountID accproto.AccountID, 
 }
 
 func (s *Service) evaluatePasswordStrength(password string) bool {
-	if len(password) < 8 {
+	if len(password) < int(s.config.MinLength) {
 		return false
 	}
 
