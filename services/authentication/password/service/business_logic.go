@@ -88,14 +88,24 @@ func (s *Service) Update(ctx context.Context, req passwordproto.UpdateRequest) e
 	// Get existing password to delete it
 	existingPassword, err := s.storage.GetByAccountID(ctx, req.AccountID)
 	if err != nil && !errors.Is(err, dbproto.ErrRowNotFound) {
-		s.logger.Error("failed to get existing password", slog.String("error", err.Error()))
+		s.logger.ErrorContext(
+			ctx,
+			"failed to get existing password",
+			slog.String("error", err.Error()),
+			slog.Any("accountID", req.AccountID),
+		)
 		return derror.ErrInternalSystem
 	}
 
 	// Delete existing password if it exists
 	if err == nil {
 		if err := s.storage.Delete(ctx, existingPassword.ID); err != nil {
-			s.logger.Error("failed to delete old password", slog.String("error", err.Error()))
+			s.logger.ErrorContext(
+				ctx,
+				"failed to delete old password",
+				slog.String("error", err.Error()),
+				slog.Any("accountID", req.AccountID),
+			)
 			return err
 		}
 	}
@@ -138,7 +148,12 @@ func (s *Service) verifyPassword(storedPassword hash, password string) bool {
 func (s *Service) usedBefore(ctx context.Context, accountID accproto.AccountID, hashedPassword string) (bool, error) {
 	passwords, err := s.storage.History(ctx, accountID, s.config.CheckPasswordHistoryLimit)
 	if err != nil {
-		s.logger.Error("failed to get password history", slog.String("error", err.Error()))
+		s.logger.ErrorContext(
+			ctx,
+			"failed to get password history",
+			slog.String("error", err.Error()),
+			slog.Any("accountID", accountID),
+		)
 		return false, derror.ErrInternalSystem
 	}
 

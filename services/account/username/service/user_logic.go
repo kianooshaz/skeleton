@@ -28,7 +28,12 @@ func (s *Service) Assign(ctx context.Context, req usernameproto.AssignRequest) (
 
 	exist, err := s.storage.Exist(ctx, req.Username)
 	if err != nil {
-		s.logger.Error("Error encountered while getting count by username", slog.String("error", err.Error()))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while getting count by username",
+			slog.String("error", err.Error()),
+			slog.String("username", req.Username),
+		)
 
 		return usernameproto.Username{}, derror.ErrInternalSystem
 	}
@@ -49,7 +54,13 @@ func (s *Service) Assign(ctx context.Context, req usernameproto.AssignRequest) (
 
 	id, err := uuid.NewV7()
 	if err != nil {
-		s.logger.Error("Error encountered while generating username id", slog.String("error", err.Error()))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while generating username id",
+			slog.String("error", err.Error()),
+			slog.String("username", req.Username),
+		)
+
 		return usernameproto.Username{}, derror.ErrInternalSystem
 	}
 
@@ -62,7 +73,12 @@ func (s *Service) Assign(ctx context.Context, req usernameproto.AssignRequest) (
 
 	err = s.storage.Create(ctx, username)
 	if err != nil {
-		s.logger.Error("Error encountered while creating username in database", slog.String("error", err.Error()))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while creating username in database",
+			slog.String("error", err.Error()),
+			slog.String("username", req.Username),
+		)
 
 		return usernameproto.Username{}, derror.ErrInternalSystem
 	}
@@ -87,7 +103,13 @@ func (s *Service) isValidUsername(value string) bool {
 func (s *Service) checkAccountMax(ctx context.Context, accountID accprotocol.AccountID) (bool, error) {
 	countByAccount, err := s.storage.CountByAccount(ctx, accountID)
 	if err != nil {
-		s.logger.Error("Error encountered while getting count by account", slog.String("error", err.Error()))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while getting count by account",
+			slog.String("error", err.Error()),
+			slog.String("accountID", accountID.String()),
+		)
+
 		return false, derror.ErrInternalSystem
 	}
 	if countByAccount > int64(s.config.MaxUserUsernamePerOrganization) {
@@ -108,18 +130,31 @@ func (s *Service) Unassigned(ctx context.Context, id uuid.UUID) error {
 		s.logger.Error(
 			"Error encountered while getting username from database",
 			"id", id,
-			slog.String("error", err.Error()))
+			slog.String("error", err.Error()),
+		)
+
 		return derror.ErrInternalSystem
 	}
 
 	if username.Status.Has(stat.Locked) {
-		s.logger.Error("username is locked and cannot be unassigned", "username", id)
+		s.logger.ErrorContext(
+			ctx,
+			"username is locked and cannot be unassigned",
+			slog.String("username", id.String()),
+		)
+
 		return derror.ErrUsernameLocked
 	}
 
 	err = s.storage.Delete(ctx, id)
 	if err != nil {
-		s.logger.Error("Error encountered while unassigning username", "id", id, slog.String("error", err.Error()))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while unassigning username",
+			slog.String("id", id.String()),
+			slog.String("error", err.Error()),
+		)
+
 		return derror.ErrInternalSystem
 	}
 
@@ -130,19 +165,22 @@ func (s *Service) ListAssigned(ctx context.Context, req usernameproto.ListAssign
 	usernameproto.ListAssignedResponse, error) {
 	usernames, err := s.storage.ListByUserAndOrganization(ctx, req)
 	if err != nil {
-		s.logger.Error(
+		s.logger.ErrorContext(
+			ctx,
 			"Error encountered while listing assigned usernames",
-			"accountID", req.AccountID,
+			slog.String("accountID", req.AccountID.String()),
 			slog.String("error", err.Error()),
 		)
+
 		return usernameproto.ListAssignedResponse{}, derror.ErrInternalSystem
 	}
 
 	count, err := s.storage.CountByAccount(ctx, req.AccountID)
 	if err != nil {
-		s.logger.Error(
+		s.logger.ErrorContext(
+			ctx,
 			"Error encountered while counting assigned usernames",
-			"accountID", req.AccountID,
+			slog.String("accountID", req.AccountID.String()),
 			slog.String("error", err.Error()),
 		)
 		return usernameproto.ListAssignedResponse{}, derror.ErrInternalSystem
@@ -175,7 +213,13 @@ func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 		if errors.Is(err, dbproto.ErrRowNotFound) {
 			return derror.ErrUsernameNotFound
 		}
-		s.logger.Error("Error encountered while fetching username from db", slog.String("error", err.Error()))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while fetching username from db",
+			slog.String("error", err.Error()),
+			slog.String("usernameID", id.String()),
+		)
+
 		return derror.ErrInternalSystem
 	}
 
@@ -186,7 +230,13 @@ func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 		},
 	})
 	if err != nil {
-		s.logger.Error("Error encountered while fetching usernames from db", slog.String("error", err.Error()))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while fetching usernames from db",
+			slog.String("error", err.Error()),
+			slog.String("accountID", shouldBePrimary.AccountID.String()),
+		)
+
 		return derror.ErrInternalSystem
 	}
 
@@ -198,7 +248,11 @@ func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 	defer func() {
 		// TODO pgx.ErrTxClosed should change not depend database
 		if err := tx.Rollback(); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
-			s.logger.Error("Error encountered while rolling back transaction", slog.String("error", err.Error()))
+			s.logger.ErrorContext(
+				ctx,
+				"Error encountered while rolling back transaction",
+				slog.String("error", err.Error()),
+			)
 		}
 	}()
 
@@ -212,7 +266,8 @@ func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 			username.Status.Add(Primary)
 
 			if err := s.storage.UpdateStatus(ctx, username); err != nil {
-				s.logger.Error(
+				s.logger.ErrorContext(
+					ctx,
 					"Error encountered while adding primary status to username",
 					slog.String("error", err.Error()),
 					slog.Any("username", username),
@@ -226,7 +281,8 @@ func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 			username.Status.Remove(Primary)
 
 			if err := s.storage.UpdateStatus(ctx, username); err != nil {
-				s.logger.Error(
+				s.logger.ErrorContext(
+					ctx,
 					"Error encountered while adding deleting status to username",
 					slog.String("error", err.Error()),
 					slog.Any("username", username),
@@ -239,7 +295,8 @@ func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		s.logger.Error(
+		s.logger.ErrorContext(
+			ctx,
 			"Error encountered while committing transaction",
 			slog.String("error", err.Error()),
 		)

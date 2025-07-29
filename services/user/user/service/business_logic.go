@@ -26,7 +26,12 @@ func (s *service) Create(ctx context.Context) (userproto.CreateResponse, error) 
 	}
 
 	if err = s.persister.Create(ctx, user); err != nil {
-		s.logger.ErrorContext(ctx, "Error encountered while creating user in storage", slog.String("error", err.Error()))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while creating user in storage",
+			slog.String("error", err.Error()),
+			slog.Any("user", user),
+		)
 
 		return userproto.CreateResponse{}, derror.ErrInternalSystem
 	}
@@ -43,7 +48,12 @@ func (s *service) Get(ctx context.Context, req userproto.GetRequest) (userproto.
 			return userproto.GetResponse{}, err
 		}
 
-		s.logger.ErrorContext(ctx, "Error encountered while getting user from storage", slog.String("error", err.Error()), slog.Any("req", req))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while getting user from storage",
+			slog.String("error", err.Error()),
+			slog.Any("req", req),
+		)
 
 		return userproto.GetResponse{}, derror.ErrInternalSystem
 	}
@@ -55,14 +65,24 @@ func (s *service) Get(ctx context.Context, req userproto.GetRequest) (userproto.
 func (s *service) List(ctx context.Context, req userproto.ListRequest) (userproto.ListResponse, error) {
 	users, err := s.persister.List(ctx, req.Page, req.OrderBy)
 	if err != nil {
-		s.logger.ErrorContext(ctx, "Error encountered while listing users from storage", slog.String("error", err.Error()), slog.Any("req", req))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while listing users from storage",
+			slog.String("error", err.Error()),
+			slog.Any("req", req),
+		)
 
 		return userproto.ListResponse{}, derror.ErrInternalSystem
 	}
 
 	totalCount, err := s.persister.Count(ctx)
 	if err != nil {
-		s.logger.ErrorContext(ctx, "Error encountered while counting users from storage", slog.String("error", err.Error()), slog.Any("req", req))
+		s.logger.ErrorContext(
+			ctx,
+			"Error encountered while counting users from storage",
+			slog.String("error", err.Error()),
+			slog.Any("req", req),
+		)
 
 		return userproto.ListResponse{}, derror.ErrInternalSystem
 	}

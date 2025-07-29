@@ -30,7 +30,8 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID) (aunp.Username, error) 
 func (s *Service) List(ctx context.Context, req aunp.ListRequest) (aunp.ListResponse, error) {
 	usernames, err := s.storage.ListWithSearch(ctx, req)
 	if err != nil {
-		s.logger.Error(
+		s.logger.ErrorContext(
+			ctx,
 			"Error encountered while searching usernames",
 			slog.String("error", err.Error()),
 			slog.Any("request", req),
@@ -41,7 +42,8 @@ func (s *Service) List(ctx context.Context, req aunp.ListRequest) (aunp.ListResp
 
 	count, err := s.storage.CountWithSearch(ctx, req)
 	if err != nil {
-		s.logger.Error(
+		s.logger.ErrorContext(
+			ctx,
 			"Error encountered while counting usernames",
 			slog.String("error", err.Error()),
 			slog.Any("request", req),
