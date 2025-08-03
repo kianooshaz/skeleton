@@ -1,2 +1,2 @@
 SELECT COUNT(*)
-FROM users
+FROM `users`

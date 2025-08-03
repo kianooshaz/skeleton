@@ -11,7 +11,7 @@ import (
 	dbproto "github.com/kianooshaz/skeleton/foundation/database/proto"
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
-	accproto "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
+	accproto "github.com/kianooshaz/skeleton/services/account/accounts/proto"
 	passwordproto "github.com/kianooshaz/skeleton/services/authentication/password/proto"
 	"golang.org/x/crypto/bcrypt"
 )

@@ -13,7 +13,7 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/session"
 	"github.com/kianooshaz/skeleton/foundation/stat"
-	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
+	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/proto"
 	usernameproto "github.com/kianooshaz/skeleton/services/account/username/proto"
 )
 

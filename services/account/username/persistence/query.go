@@ -10,7 +10,7 @@ import (
 	dbproto "github.com/kianooshaz/skeleton/foundation/database/proto"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/session"
-	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
+	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/proto"
 	usernameproto "github.com/kianooshaz/skeleton/services/account/username/proto"
 )
 

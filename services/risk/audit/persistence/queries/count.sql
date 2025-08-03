@@ -1,2 +1,2 @@
 SELECT COUNT(*)
-FROM audit_records
+FROM `audit_records`

@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
-	accproto "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
+	accproto "github.com/kianooshaz/skeleton/services/account/accounts/proto"
 )
 
 type Password struct {

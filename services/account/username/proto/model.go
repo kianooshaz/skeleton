@@ -9,7 +9,7 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/foundation/stat"
 	"github.com/kianooshaz/skeleton/foundation/types"
-	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
+	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/proto"
 )
 
 type Username struct {

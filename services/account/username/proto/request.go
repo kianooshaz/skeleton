@@ -4,7 +4,7 @@ import (
 	"github.com/kianooshaz/skeleton/foundation/derror"
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
-	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
+	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/proto"
 )
 
 type AssignRequest struct {

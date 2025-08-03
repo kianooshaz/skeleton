@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kianooshaz/skeleton/foundation/config"
 	"github.com/kianooshaz/skeleton/foundation/database/postgres"
-	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/protocol"
+	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/proto"
 	"github.com/kianooshaz/skeleton/services/account/username/persistence"
 	aunp "github.com/kianooshaz/skeleton/services/account/username/proto"
 )
