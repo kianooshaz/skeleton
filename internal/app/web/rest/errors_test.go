@@ -22,7 +22,7 @@ func Test_ErrorResponse(t *testing.T) {
 			name:       "known error maps to status",
 			err:        derror.ErrUserNotFound,
 			wantStatus: http.StatusBadRequest,
-			wantBody:   `{"error":"100100"}`,
+			wantBody:   `{"error":"100101"}`,
 		},
 		{
 			name:       "unknown error maps to 500",
