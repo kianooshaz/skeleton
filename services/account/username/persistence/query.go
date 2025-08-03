@@ -74,10 +74,13 @@ func (us *UsernameStorage) Get(ctx context.Context, id uuid.UUID) (usernameproto
 	return username, nil
 }
 
-func (us *UsernameStorage) ListWithSearch(ctx context.Context, req usernameproto.ListRequest) ([]usernameproto.Username, error) {
+func (us *UsernameStorage) ListWithSearch(
+	ctx context.Context, req usernameproto.ListRequest,
+) ([]usernameproto.Username, error) {
 	conn := session.GetDBConnection(ctx, us.Conn)
 
-	query := listByAccountQuery + req.OrderBy.String(oderStringer) + req.Page.String(pagination.SQLStringer(defaultPageSize))
+	query := listByAccountQuery + req.OrderBy.String(oderStringer) +
+		req.Page.String(pagination.SQLStringer(defaultPageSize))
 
 	rows, err := conn.QueryContext(ctx, query, req.AccountID)
 	if err != nil {

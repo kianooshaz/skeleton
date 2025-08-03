@@ -50,7 +50,7 @@ func New(cfg Config) (protocol.WebService, error) {
 	e.Server.WriteTimeout = cfg.WriteTimeout
 	e.Server.IdleTimeout = cfg.IdleTimeout
 	e.Server.ErrorLog = slog.NewLogLogger(slog.Default().Handler(), slog.LevelError)
-	e.HTTPErrorHandler = errorResponse
+	e.HTTPErrorHandler = ErrorResponse
 
 	// Middlewares
 	e.Use(echomw.Recover())

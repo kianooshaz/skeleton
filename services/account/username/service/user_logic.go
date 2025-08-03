@@ -290,7 +290,6 @@ func (s *Service) BePrimary(ctx context.Context, id uuid.UUID) error {
 
 				return derror.ErrInternalSystem
 			}
-
 		}
 	}
 

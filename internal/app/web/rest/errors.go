@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func errorResponse(err error, c echo.Context) {
+func ErrorResponse(err error, c echo.Context) {
 	status, ok := DerrorToHTTPStatus[err]
 	if !ok {
 		slog.Error(
@@ -31,7 +31,6 @@ func errorResponse(err error, c echo.Context) {
 			slog.String("package", "rest"),
 		)
 	}
-
 }
 
 var DerrorToHTTPStatus = map[error]int{

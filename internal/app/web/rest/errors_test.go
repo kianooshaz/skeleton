@@ -1,4 +1,4 @@
-package rest
+package rest_test
 
 import (
 	"errors"
@@ -7,10 +7,11 @@ import (
 	"testing"
 
 	"github.com/kianooshaz/skeleton/foundation/derror"
+	"github.com/kianooshaz/skeleton/internal/app/web/rest"
 	"github.com/labstack/echo/v4"
 )
 
-func Test_errorResponse(t *testing.T) {
+func Test_ErrorResponse(t *testing.T) {
 	tests := []struct {
 		name       string
 		err        error
@@ -38,7 +39,7 @@ func Test_errorResponse(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			errorResponse(tt.err, c)
+			rest.ErrorResponse(tt.err, c)
 
 			if rec.Code != tt.wantStatus {
 				t.Errorf("got status %d, want %d", rec.Code, tt.wantStatus)

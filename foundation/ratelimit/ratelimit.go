@@ -2,7 +2,7 @@ package ratelimit
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/kianooshaz/skeleton/foundation/config"
@@ -52,7 +52,7 @@ type RateLimiterConfig struct {
 func Init(redisClient redis.Cmdable) {
 	cfg, err := config.Load[RateLimiterConfig]("ratelimit")
 	if err != nil {
-		log.Fatalf("failed to load rate limiter config: %v", err)
+		slog.Error("failed to load rate limiter config", "error", err)
 		return
 	}
 

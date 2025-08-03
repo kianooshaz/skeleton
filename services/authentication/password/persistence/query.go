@@ -71,7 +71,9 @@ func (ps *PasswordStorage) Get(ctx context.Context, id uuid.UUID) (passwordproto
 	return password, nil
 }
 
-func (ps *PasswordStorage) GetByAccountID(ctx context.Context, accountID accprotocol.AccountID) (passwordproto.Password, error) {
+func (ps *PasswordStorage) GetByAccountID(
+	ctx context.Context, accountID accprotocol.AccountID,
+) (passwordproto.Password, error) {
 	conn := session.GetDBConnection(ctx, ps.Conn)
 
 	var password passwordproto.Password
@@ -87,10 +89,13 @@ func (ps *PasswordStorage) GetByAccountID(ctx context.Context, accountID accprot
 	return password, nil
 }
 
-func (ps *PasswordStorage) ListWithSearch(ctx context.Context, req passwordproto.ListRequest) ([]passwordproto.Password, error) {
+func (ps *PasswordStorage) ListWithSearch(
+	ctx context.Context, req passwordproto.ListRequest,
+) ([]passwordproto.Password, error) {
 	conn := session.GetDBConnection(ctx, ps.Conn)
 
-	query := listByAccountQuery + req.OrderBy.String(oderStringer) + req.Page.String(pagination.SQLStringer(defaultPageSize))
+	query := listByAccountQuery + req.OrderBy.String(oderStringer) +
+		req.Page.String(pagination.SQLStringer(defaultPageSize))
 
 	rows, err := conn.QueryContext(ctx, query, req.AccountID)
 	if err != nil {
