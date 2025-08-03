@@ -2,14 +2,16 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"sync"
 
 	"github.com/kianooshaz/skeleton/foundation/config"
 	"github.com/kianooshaz/skeleton/foundation/database/postgres"
-	"github.com/kianooshaz/skeleton/services/risk/audit/protocol"
-	ap "github.com/kianooshaz/skeleton/services/risk/audit/protocol"
-	"github.com/kianooshaz/skeleton/services/risk/audit/service/storage"
+	"github.com/kianooshaz/skeleton/foundation/order"
+	"github.com/kianooshaz/skeleton/foundation/pagination"
+	"github.com/kianooshaz/skeleton/services/risk/audit/persistence"
+	auditproto "github.com/kianooshaz/skeleton/services/risk/audit/proto"
 )
 
 type (
@@ -18,20 +20,24 @@ type (
 		WorkerCount int
 	}
 
-	auditService struct {
-		storage  storer
-		logger   *slog.Logger
-		recordCh chan ap.Record
-		shutdown chan struct{}
-		workerWg *sync.WaitGroup
+	persister interface {
+		Create(ctx context.Context, record auditproto.Record) error
+		Get(ctx context.Context, id auditproto.RecordID) (auditproto.Record, error)
+		List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]auditproto.Record, error)
+		Count(ctx context.Context) (int, error)
 	}
 
-	storer interface {
-		Create(ctx context.Context, record protocol.Record) error
+	auditService struct {
+		persister persister
+		logger    *slog.Logger
+		recordCh  chan auditproto.Record
+		shutdown  chan struct{}
+		workerWg  *sync.WaitGroup
+		dbConn    *sql.DB
 	}
 )
 
-var Audit ap.Audit
+var Service auditproto.AuditService
 
 func init() {
 	cfg, err := config.Load[Config]("risk.audit")
@@ -40,22 +46,22 @@ func init() {
 	}
 
 	service := &auditService{
-		storage: &storage.AuditStorage{Conn: postgres.ConnectionPool},
+		persister: &persistence.AuditStorage{Conn: postgres.ConnectionPool},
 		logger: slog.With(
 			slog.Group("package_info",
-				slog.String("module", "user"),
-				slog.String("service", "user"),
+				slog.String("module", "audit"),
+				slog.String("service", "audit"),
 			),
 		),
-		recordCh: make(chan ap.Record, cfg.BufferSize),
+		recordCh: make(chan auditproto.Record, cfg.BufferSize),
 		shutdown: make(chan struct{}),
 		workerWg: &sync.WaitGroup{},
+		dbConn:   postgres.ConnectionPool,
 	}
 
 	for range cfg.WorkerCount {
-
 		go service.processRecords()
 	}
 
-	Audit = service
+	Service = service
 }

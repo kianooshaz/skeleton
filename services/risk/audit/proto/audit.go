@@ -27,4 +27,6 @@ type ListRequest struct {
 	order.OrderBy
 }
 
-type ListResponse pagination.Response[Record]
+type ListResponse struct {
+	pagination.Response[Record]
+}
