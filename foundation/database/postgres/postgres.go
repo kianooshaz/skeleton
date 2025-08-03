@@ -11,12 +11,12 @@ import (
 )
 
 type Config struct {
-	Port        int           `yaml:"port" validate:"required"`
-	Name        string        `yaml:"name" validate:"required"`
-	Host        string        `yaml:"host" validate:"required"`
-	User        string        `yaml:"user" validate:"required"`
-	Password    string        `yaml:"password" validate:"required"`
-	SSLMode     string        `yaml:"ssl_mode" validate:"required"`
+	Port        int           `yaml:"port"         validate:"required"`
+	Name        string        `yaml:"name"         validate:"required"`
+	Host        string        `yaml:"host"         validate:"required"`
+	User        string        `yaml:"user"         validate:"required"`
+	Password    string        `yaml:"password"     validate:"required"`
+	SSLMode     string        `yaml:"ssl_mode"     validate:"required"`
 	PingTimeout time.Duration `yaml:"ping_timeout"`
 }
 

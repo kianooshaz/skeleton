@@ -136,7 +136,9 @@ func (ps *PasswordStorage) CountWithSearch(ctx context.Context, req passwordprot
 	return count, nil
 }
 
-func (ps *PasswordStorage) History(ctx context.Context, accountID accprotocol.AccountID, limit int32) ([]passwordproto.Password, error) {
+func (ps *PasswordStorage) History(
+	ctx context.Context, accountID accprotocol.AccountID, limit int32,
+) ([]passwordproto.Password, error) {
 	conn := session.GetDBConnection(ctx, ps.Conn)
 
 	rows, err := conn.QueryContext(ctx, historyQuery, accountID, limit)
