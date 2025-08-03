@@ -39,5 +39,6 @@ var ErrUsernameAlreadyExists = errors.New("100307")
 var ErrUsernameRequired = errors.New("100308")
 
 var ErrOrganizationIDRequired = errors.New("100400")
+var ErrOrganizationNotFound = errors.New("100401")
 
 var ErrAccountIDRequired = errors.New("100500")
