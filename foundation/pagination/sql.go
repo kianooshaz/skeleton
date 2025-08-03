@@ -19,5 +19,4 @@ func SQLStringer(maxRows uint) StringerFunc {
 			return fmt.Sprintf(" LIMIT %d ", maxRows)
 		}
 	}
-
 }

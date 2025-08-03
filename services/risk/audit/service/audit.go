@@ -52,7 +52,12 @@ func (as *auditService) processRecords() {
 		select {
 		case record := <-as.recordCh:
 			if err := as.persister.Create(context.Background(), record); err != nil {
-				as.logger.ErrorContext(session.SetRequestID(context.Background(), record.RequestID), "failed to create audit record", slog.String("error", err.Error()), "record", record)
+				as.logger.ErrorContext(
+					session.SetRequestID(context.Background(), record.RequestID),
+					"failed to create audit record",
+					slog.String("error", err.Error()),
+					slog.Any("record", record),
+				)
 			}
 		case <-as.shutdown:
 			as.logger.Info("worker shutting down")

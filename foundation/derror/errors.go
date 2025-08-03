@@ -3,7 +3,7 @@ package derror
 
 import "errors"
 
-// system errors
+// system errors.
 var ErrInternalSystem = errors.New("100000")
 var ErrUndefinedPathAndMethod = errors.New("100001")
 var ErrInvalidJsonFormat = errors.New("100002")
@@ -17,7 +17,7 @@ var ErrRowsValueTooSmall = errors.New("100009")
 var ErrRowsValueTooLarge = errors.New("100010")
 var ErrRateLimitExceeded = errors.New("100011")
 
-// user errors
+// user errors.
 var ErrUserIDRequired = errors.New("100100")
 var ErrUserNotFound = errors.New("100101")
 var ErrUserAlreadyExists = errors.New("100102")

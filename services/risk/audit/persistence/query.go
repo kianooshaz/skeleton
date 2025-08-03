@@ -59,7 +59,9 @@ func (as *AuditStorage) Get(ctx context.Context, id auditproto.RecordID) (auditp
 	return record, err
 }
 
-func (as *AuditStorage) List(ctx context.Context, page pagination.Page, orderBy order.OrderBy) ([]auditproto.Record, error) {
+func (as *AuditStorage) List(
+	ctx context.Context, page pagination.Page, orderBy order.OrderBy,
+) ([]auditproto.Record, error) {
 	conn := session.GetDBConnection(ctx, as.Conn)
 
 	query := listQuery + page.String(pagination.SQLStringer(defaultPageSize)) + orderBy.String(oderStringer)

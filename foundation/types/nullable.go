@@ -62,75 +62,169 @@ func (n *Nullable[T]) UnmarshalParam(param string) error {
 		return nil
 	}
 
+	value, err := n.parseParam(param)
+	if err != nil {
+		n.Valid = false
+		return err
+	}
+
+	n.Value = value
+	n.Valid = true
+	return nil
+}
+
+func (n *Nullable[T]) parseParam(param string) (T, error) {
 	var v T
-	var err error
 
 	switch any(v).(type) {
 	case string:
-		n.Value = any(param).(T)
+		return any(param).(T), nil
 	case int8:
-		var parsed int64
-		parsed, err = strconv.ParseInt(param, 10, 8)
-		n.Value = any(int8(parsed)).(T)
+		return n.parseInt8(param)
 	case int16:
-		var parsed int64
-		parsed, err = strconv.ParseInt(param, 10, 16)
-		n.Value = any(int16(parsed)).(T)
+		return n.parseInt16(param)
 	case int32:
-		var parsed int64
-		parsed, err = strconv.ParseInt(param, 10, 32)
-		n.Value = any(int32(parsed)).(T)
+		return n.parseInt32(param)
 	case int64:
-		var parsed int64
-		parsed, err = strconv.ParseInt(param, 10, 64)
-		n.Value = any(parsed).(T)
+		return n.parseInt64(param)
 	case int:
-		var parsed int64
-		parsed, err = strconv.ParseInt(param, 10, 0)
-		n.Value = any(int(parsed)).(T)
+		return n.parseInt(param)
 	case uint8:
-		var parsed uint64
-		parsed, err = strconv.ParseUint(param, 10, 8)
-		n.Value = any(uint8(parsed)).(T)
+		return n.parseUint8(param)
 	case uint16:
-		var parsed uint64
-		parsed, err = strconv.ParseUint(param, 10, 16)
-		n.Value = any(uint16(parsed)).(T)
+		return n.parseUint16(param)
 	case uint32:
-		var parsed uint64
-		parsed, err = strconv.ParseUint(param, 10, 32)
-		n.Value = any(uint32(parsed)).(T)
+		return n.parseUint32(param)
 	case uint64:
-		var parsed uint64
-		parsed, err = strconv.ParseUint(param, 10, 64)
-		n.Value = any(parsed).(T)
+		return n.parseUint64(param)
 	case float32:
-		var parsed float64
-		parsed, err = strconv.ParseFloat(param, 32)
-		n.Value = any(float32(parsed)).(T)
+		return n.parseFloat32(param)
 	case float64:
-		var parsed float64
-		parsed, err = strconv.ParseFloat(param, 64)
-		n.Value = any(parsed).(T)
+		return n.parseFloat64(param)
 	case bool:
-		var parsed bool
-		parsed, err = strconv.ParseBool(param)
-		n.Value = any(parsed).(T)
+		return n.parseBool(param)
 	case time.Time:
-		var parsed time.Time
-		parsed, err = time.Parse(time.RFC3339, param)
-		n.Value = any(parsed).(T)
+		return n.parseTime(param)
 	default:
-		return fmt.Errorf("unsupported type %T for Nullable", v)
+		return v, fmt.Errorf("unsupported type %T for Nullable", v)
 	}
+}
 
+func (n *Nullable[T]) parseInt8(param string) (T, error) {
+	parsed, err := strconv.ParseInt(param, 10, 8)
 	if err != nil {
-		n.Valid = false
-		return fmt.Errorf("failed to parse param %q to %T: %w", param, v, err)
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to int8: %w", param, err)
 	}
+	return any(int8(parsed)).(T), nil
+}
 
-	n.Valid = true
-	return nil
+func (n *Nullable[T]) parseInt16(param string) (T, error) {
+	parsed, err := strconv.ParseInt(param, 10, 16)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to int16: %w", param, err)
+	}
+	return any(int16(parsed)).(T), nil
+}
+
+func (n *Nullable[T]) parseInt32(param string) (T, error) {
+	parsed, err := strconv.ParseInt(param, 10, 32)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to int32: %w", param, err)
+	}
+	return any(int32(parsed)).(T), nil
+}
+
+func (n *Nullable[T]) parseInt64(param string) (T, error) {
+	parsed, err := strconv.ParseInt(param, 10, 64)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to int64: %w", param, err)
+	}
+	return any(parsed).(T), nil
+}
+
+func (n *Nullable[T]) parseInt(param string) (T, error) {
+	parsed, err := strconv.ParseInt(param, 10, 0)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to int: %w", param, err)
+	}
+	return any(int(parsed)).(T), nil
+}
+
+func (n *Nullable[T]) parseUint8(param string) (T, error) {
+	parsed, err := strconv.ParseUint(param, 10, 8)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to uint8: %w", param, err)
+	}
+	return any(uint8(parsed)).(T), nil
+}
+
+func (n *Nullable[T]) parseUint16(param string) (T, error) {
+	parsed, err := strconv.ParseUint(param, 10, 16)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to uint16: %w", param, err)
+	}
+	return any(uint16(parsed)).(T), nil
+}
+
+func (n *Nullable[T]) parseUint32(param string) (T, error) {
+	parsed, err := strconv.ParseUint(param, 10, 32)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to uint32: %w", param, err)
+	}
+	return any(uint32(parsed)).(T), nil
+}
+
+func (n *Nullable[T]) parseUint64(param string) (T, error) {
+	parsed, err := strconv.ParseUint(param, 10, 64)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to uint64: %w", param, err)
+	}
+	return any(parsed).(T), nil
+}
+
+func (n *Nullable[T]) parseFloat32(param string) (T, error) {
+	parsed, err := strconv.ParseFloat(param, 32)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to float32: %w", param, err)
+	}
+	return any(float32(parsed)).(T), nil
+}
+
+func (n *Nullable[T]) parseFloat64(param string) (T, error) {
+	parsed, err := strconv.ParseFloat(param, 64)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to float64: %w", param, err)
+	}
+	return any(parsed).(T), nil
+}
+
+func (n *Nullable[T]) parseBool(param string) (T, error) {
+	parsed, err := strconv.ParseBool(param)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to bool: %w", param, err)
+	}
+	return any(parsed).(T), nil
+}
+
+func (n *Nullable[T]) parseTime(param string) (T, error) {
+	parsed, err := time.Parse(time.RFC3339, param)
+	if err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed to parse param %q to time.Time: %w", param, err)
+	}
+	return any(parsed).(T), nil
 }
 
 func (n *Nullable[T]) UnmarshalJSON(data []byte) error {

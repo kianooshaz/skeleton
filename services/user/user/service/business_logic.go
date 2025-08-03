@@ -59,7 +59,6 @@ func (s *service) Get(ctx context.Context, req userproto.GetRequest) (userproto.
 	}
 
 	return userproto.GetResponse{Data: user}, nil
-
 }
 
 func (s *service) List(ctx context.Context, req userproto.ListRequest) (userproto.ListResponse, error) {

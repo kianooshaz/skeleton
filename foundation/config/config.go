@@ -20,7 +20,7 @@ package config
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/go-playground/validator/v10"
@@ -42,7 +42,8 @@ func init() {
 
 	// Load the configuration file using koanf and YAML parser.
 	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
-		log.Fatal(fmt.Errorf("error loading config: %w", err))
+		slog.Error("error loading config", "error", err)
+		os.Exit(1)
 	}
 }
 
