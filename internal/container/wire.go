@@ -23,6 +23,8 @@ import (
 	orgservice "github.com/kianooshaz/skeleton/services/organization/organization/service"
 	auditproto "github.com/kianooshaz/skeleton/services/risk/audit/proto"
 	auditservice "github.com/kianooshaz/skeleton/services/risk/audit/service"
+	birthdayproto "github.com/kianooshaz/skeleton/services/user/birthday/proto"
+	birthdayservice "github.com/kianooshaz/skeleton/services/user/birthday/service"
 	userproto "github.com/kianooshaz/skeleton/services/user/user/proto"
 	userservice "github.com/kianooshaz/skeleton/services/user/user/service"
 )
@@ -39,6 +41,7 @@ func ProvideAppConfig(k *koanf.Koanf) (*AppConfig, error) {
 func ProvidePasswordConfig(cfg *AppConfig) passwordservice.Config { return cfg.Password }
 func ProvideUsernameConfig(cfg *AppConfig) usernameservice.Config { return cfg.Username }
 func ProvideAuditConfig(cfg *AppConfig) auditservice.Config       { return cfg.Audit }
+func ProvideBirthdayConfig(cfg *AppConfig) birthdayservice.Config { return cfg.Birthday }
 func ProvideRestConfig(cfg *AppConfig) rest.Config                { return cfg.RestServer }
 func ProvideLoggerConfig(cfg *AppConfig) log.LoggerConfig         { return cfg.Logger }
 func ProvidePostgresConfig(cfg *AppConfig) postgres.Config        { return cfg.Postgres }
@@ -54,6 +57,7 @@ func ProvideWebContainer(
 	passwordService passwordproto.PasswordService,
 	usernameService usernameproto.UsernameService,
 	auditService auditproto.AuditService,
+	birthdayService birthdayproto.BirthdayService,
 ) Container {
 	return &WebContainer{
 		config:              cfg,
@@ -65,6 +69,7 @@ func ProvideWebContainer(
 		passwordService:     passwordService,
 		usernameService:     usernameService,
 		auditService:        auditService,
+		birthdayService:     birthdayService,
 	}
 }
 
@@ -75,6 +80,7 @@ var ConfigSet = wire.NewSet(
 	ProvidePasswordConfig,
 	ProvideUsernameConfig,
 	ProvideAuditConfig,
+	ProvideBirthdayConfig,
 	ProvideRestConfig,
 	ProvideLoggerConfig,
 	ProvidePostgresConfig,
@@ -97,6 +103,7 @@ var WebContainerSet = wire.NewSet(
 	passwordservice.New,
 	usernameservice.New,
 	auditservice.New,
+	birthdayservice.New,
 	rest.New,
 	ProvideWebContainer,
 )

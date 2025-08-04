@@ -9,6 +9,7 @@ import (
 	usernameservice "github.com/kianooshaz/skeleton/services/account/username/service"
 	passwordservice "github.com/kianooshaz/skeleton/services/authentication/password/service"
 	auditservice "github.com/kianooshaz/skeleton/services/risk/audit/service"
+	birthdayservice "github.com/kianooshaz/skeleton/services/user/birthday/service"
 )
 
 // AppConfig represents the root application configuration.
@@ -20,4 +21,5 @@ type AppConfig struct {
 	Password        passwordservice.Config `yaml:"password"`
 	Username        usernameservice.Config `yaml:"username"`
 	Audit           auditservice.Config    `yaml:"audit"`
+	Birthday        birthdayservice.Config `yaml:"birthday"`
 }

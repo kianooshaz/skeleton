@@ -10,6 +10,7 @@ import (
 	passwordproto "github.com/kianooshaz/skeleton/services/authentication/password/proto"
 	orgproto "github.com/kianooshaz/skeleton/services/organization/organization/proto"
 	auditproto "github.com/kianooshaz/skeleton/services/risk/audit/proto"
+	birthdayproto "github.com/kianooshaz/skeleton/services/user/birthday/proto"
 	userproto "github.com/kianooshaz/skeleton/services/user/user/proto"
 )
 
@@ -24,6 +25,7 @@ type WebContainer struct {
 	passwordService     passwordproto.PasswordService
 	usernameService     usernameproto.UsernameService
 	auditService        auditproto.AuditService
+	birthdayService     birthdayproto.BirthdayService
 }
 
 // Start initializes and starts all services.

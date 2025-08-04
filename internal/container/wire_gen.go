@@ -22,6 +22,8 @@ import (
 	"github.com/kianooshaz/skeleton/services/organization/organization/service"
 	"github.com/kianooshaz/skeleton/services/risk/audit/proto"
 	"github.com/kianooshaz/skeleton/services/risk/audit/service"
+	"github.com/kianooshaz/skeleton/services/user/birthday/proto"
+	"github.com/kianooshaz/skeleton/services/user/birthday/service"
 	"github.com/kianooshaz/skeleton/services/user/user/proto"
 	"github.com/kianooshaz/skeleton/services/user/user/service"
 	"github.com/knadh/koanf/v2"
@@ -60,7 +62,9 @@ func NewWebContainer() (Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	container := ProvideWebContainer(appConfig, logger, db, webService, userService, organizationService, passwordService, usernameService, auditService)
+	birthdayserviceConfig := ProvideBirthdayConfig(appConfig)
+	birthdayService := birthdayservice.New(birthdayserviceConfig, db, logger)
+	container := ProvideWebContainer(appConfig, logger, db, webService, userService, organizationService, passwordService, usernameService, auditService, birthdayService)
 	return container, nil
 }
 
@@ -81,6 +85,8 @@ func ProvideUsernameConfig(cfg *AppConfig) usernameservice.Config { return cfg.U
 
 func ProvideAuditConfig(cfg *AppConfig) auditservice.Config { return cfg.Audit }
 
+func ProvideBirthdayConfig(cfg *AppConfig) birthdayservice.Config { return cfg.Birthday }
+
 func ProvideRestConfig(cfg *AppConfig) rest.Config { return cfg.RestServer }
 
 func ProvideLoggerConfig(cfg *AppConfig) log.LoggerConfig { return cfg.Logger }
@@ -98,6 +104,7 @@ func ProvideWebContainer(
 	passwordService passwordproto.PasswordService,
 	usernameService usernameproto.UsernameService,
 	auditService auditproto.AuditService,
+	birthdayService birthdayproto.BirthdayService,
 ) Container {
 	return &WebContainer{
 		config:              cfg,
@@ -109,6 +116,7 @@ func ProvideWebContainer(
 		passwordService:     passwordService,
 		usernameService:     usernameService,
 		auditService:        auditService,
+		birthdayService:     birthdayService,
 	}
 }
 
@@ -117,6 +125,7 @@ var ConfigSet = wire.NewSet(config.LoadConfigWithDefaults, ProvideAppConfig,
 	ProvidePasswordConfig,
 	ProvideUsernameConfig,
 	ProvideAuditConfig,
+	ProvideBirthdayConfig,
 	ProvideRestConfig,
 	ProvideLoggerConfig,
 	ProvidePostgresConfig,
@@ -129,5 +138,5 @@ var DatabaseSet = wire.NewSet(postgres.NewConnection)
 var WebContainerSet = wire.NewSet(
 	ConfigSet,
 	LoggerSet,
-	DatabaseSet, userservice.New, orgservice.New, passwordservice.New, usernameservice.New, auditservice.New, rest.New, ProvideWebContainer,
+	DatabaseSet, userservice.New, orgservice.New, passwordservice.New, usernameservice.New, auditservice.New, birthdayservice.New, rest.New, ProvideWebContainer,
 )

@@ -55,4 +55,7 @@ app:
   audit:
     buffer_size: 1000
     worker_count: 3
+  birthday:
+    max_age: 150
+    min_age: 0
 
