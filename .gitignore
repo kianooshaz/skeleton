@@ -12,8 +12,7 @@
 build/
 dist/
 bin/
-skeleton
-*/skeleton
+
 
 # Test binary, built with `go test -c`
 *.test

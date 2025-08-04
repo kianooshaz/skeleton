@@ -2,10 +2,12 @@
 package container
 
 import (
+	"context"
 	"database/sql"
 	"log/slog"
 	"time"
 
+	"github.com/google/wire"
 	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	"github.com/kianooshaz/skeleton/foundation/log"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest"
@@ -14,18 +16,13 @@ import (
 	auditservice "github.com/kianooshaz/skeleton/services/risk/audit/service"
 )
 
-// IContainer represents a base interface for all containers.
-type IContainer interface {
-	// Close gracefully shuts down the container and its dependencies.
-	Close() error
-}
-
-// BaseConfig represents the base configuration shared across all containers.
-type BaseConfig struct {
-	ShutdownTimeout time.Duration    `yaml:"shutdown_timeout"`
-	Logger          log.LoggerConfig `yaml:"logger"`
-	Database        postgres.Config  `yaml:"postgres"`
-}
+// BaseProviderSet contains providers for base container dependencies.
+var BaseProviderSet = wire.NewSet(
+	ProvideAppConfig,
+	ProvideLogger,
+	ProvideDatabase,
+	ProvideBaseContainer,
+)
 
 // AppConfig represents the full application configuration.
 type AppConfig struct {
@@ -49,6 +46,19 @@ type BaseContainer struct {
 	Config *AppConfig
 	DB     *sql.DB
 	Logger *slog.Logger
+}
+
+// Start initializes the base container (currently no startup logic needed).
+func (c *BaseContainer) Start() error {
+	// Base container doesn't need specific startup logic
+	// Database connections are established during provider initialization
+	return nil
+}
+
+// Stop gracefully stops the base container (currently delegates to Close).
+func (c *BaseContainer) Stop(ctx context.Context) error {
+	// For base container, stop is equivalent to close
+	return c.Close()
 }
 
 // Close gracefully shuts down the base container.

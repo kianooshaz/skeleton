@@ -15,6 +15,11 @@ import (
 	userproto "github.com/kianooshaz/skeleton/services/user/user/proto"
 )
 
+const (
+	// DefaultShutdownTimeout is the default timeout for graceful shutdown operations.
+	DefaultShutdownTimeout = 30 * time.Second
+)
+
 // WebContainer holds web-specific dependencies.
 type WebContainer struct {
 	*BaseContainer
@@ -26,21 +31,47 @@ type WebContainer struct {
 	PasswordService passwordproto.PasswordService
 }
 
-// Close gracefully shuts down the web container and all its services.
-func (c *WebContainer) Close() error {
+// Start initializes and starts the web container and all its services.
+func (c *WebContainer) Start() error {
+	// Start base container first
+	if c.BaseContainer != nil {
+		if err := c.BaseContainer.Start(); err != nil {
+			return fmt.Errorf("starting base container: %w", err)
+		}
+	}
+
+	// Start the REST server
+	if c.RestServer != nil {
+		if err := c.RestServer.Start(); err != nil {
+			return fmt.Errorf("starting REST server: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// Stop gracefully stops the web container and all its services.
+func (c *WebContainer) Stop(ctx context.Context) error {
 	var errs []error
+
+	// Stop the REST server first
+	if c.RestServer != nil {
+		if err := c.RestServer.Shutdown(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("shutting down REST server: %w", err))
+		}
+	}
 
 	// Shutdown audit service workers
 	if c.AuditService != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		c.AuditService.Shutdown(ctx)
+		auditCtx, cancel := context.WithTimeout(ctx, DefaultShutdownTimeout)
+		c.AuditService.Shutdown(auditCtx)
 		cancel()
 	}
 
-	// Close base container (database, etc.)
+	// Stop base container
 	if c.BaseContainer != nil {
-		if err := c.BaseContainer.Close(); err != nil {
-			errs = append(errs, fmt.Errorf("closing base container: %w", err))
+		if err := c.BaseContainer.Stop(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("stopping base container: %w", err))
 		}
 	}
 
@@ -49,4 +80,12 @@ func (c *WebContainer) Close() error {
 	}
 
 	return nil
+}
+
+// Close gracefully shuts down the web container and all its services.
+func (c *WebContainer) Close() error {
+	// Close delegates to Stop with a default timeout
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultShutdownTimeout)
+	defer cancel()
+	return c.Stop(ctx)
 }
