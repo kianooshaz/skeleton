@@ -37,7 +37,7 @@ type Config struct {
 }
 
 type Services struct {
-	userService passwordproto.PasswordService
+	PasswordService passwordproto.PasswordService
 	// Add other services as needed
 }
 

@@ -1,4 +1,4 @@
-package auns
+package usernameservice
 
 import (
 	"context"
@@ -10,10 +10,6 @@ import (
 	"github.com/kianooshaz/skeleton/services/account/username/persistence"
 	aunp "github.com/kianooshaz/skeleton/services/account/username/proto"
 )
-
-// UsernameService is the global service instance for backward compatibility
-// TODO: Remove this after all dependencies are migrated to DI
-var UsernameService aunp.UsernameService
 
 type (
 	Config struct {
@@ -44,6 +40,8 @@ type (
 	}
 )
 
+var _ aunp.UsernameService = (*Service)(nil)
+
 // New creates a new username service instance.
 func New(cfg Config, db *sql.DB, logger *slog.Logger) aunp.UsernameService {
 	serviceLogger := *logger.With(
@@ -53,7 +51,7 @@ func New(cfg Config, db *sql.DB, logger *slog.Logger) aunp.UsernameService {
 		),
 	)
 
-	svc := &Service{
+	return &Service{
 		config: cfg,
 		logger: serviceLogger,
 		storage: &persistence.UsernameStorage{
@@ -61,11 +59,4 @@ func New(cfg Config, db *sql.DB, logger *slog.Logger) aunp.UsernameService {
 		},
 		storageConn: db,
 	}
-
-	// Set global service for backward compatibility
-	if UsernameService == nil {
-		UsernameService = svc
-	}
-
-	return svc
 }

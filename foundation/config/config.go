@@ -28,17 +28,8 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-// k is the global koanf instance used for config loading and unmarshaling.
-var k = koanf.New(".")
-
-// loadConfig loads the configuration file from the specified path.
-func loadConfig(path string) error {
-	// Load the configuration file using koanf and YAML parser.
-	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
-		return fmt.Errorf("error loading config from %s: %w", path, err)
-	}
-	return nil
-}
+// koanfInstance is the global koanf instance used for config loading and unmarshaling.
+var koanfInstance = koanf.New(".")
 
 // LoadConfigWithDefaults loads the configuration file using dependency injection patterns.
 // The default path is "config.yaml", but can be overridden by the CONFIG_PATH environment variable.
@@ -53,6 +44,9 @@ func LoadConfigWithDefaults() (*koanf.Koanf, error) {
 	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
 		return nil, fmt.Errorf("error loading config from %s: %w", path, err)
 	}
+
+	koanfInstance = k
+
 	return k, nil
 }
 
@@ -84,7 +78,7 @@ func LoadFromKoanf[T any](k *koanf.Koanf, path string) (T, error) {
 func Load[T any](path string) (T, error) {
 	var out T
 	// Unmarshal the config section at the given path into out, using YAML struct tags.
-	err := k.UnmarshalWithConf(path, &out, koanf.UnmarshalConf{Tag: "yaml"})
+	err := koanfInstance.UnmarshalWithConf(path, &out, koanf.UnmarshalConf{Tag: "yaml"})
 	if err != nil {
 		return out, fmt.Errorf("error unmarshaling config: %w", err)
 	}

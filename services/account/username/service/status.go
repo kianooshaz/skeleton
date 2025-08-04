@@ -1,4 +1,4 @@
-package auns
+package usernameservice
 
 import "github.com/kianooshaz/skeleton/foundation/stat"
 

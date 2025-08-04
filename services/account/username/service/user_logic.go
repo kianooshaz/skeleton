@@ -1,4 +1,4 @@
-package auns
+package usernameservice
 
 import (
 	"context"

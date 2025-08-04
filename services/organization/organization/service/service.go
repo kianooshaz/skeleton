@@ -1,5 +1,5 @@
 // Package service provides the implementation of the OrganizationService interface.
-package oos
+package orgservice
 
 import (
 	"context"
@@ -20,19 +20,17 @@ type (
 		Count(ctx context.Context) (int, error)
 	}
 
-	service struct {
+	Service struct {
 		logger    *slog.Logger
 		persister persister
 		dbConn    *sql.DB
 	}
 )
 
-// Service is the global service instance for backward compatibility
-// TODO: Remove this after all dependencies are migrated to DI
-var Service orgproto.OrganizationService
+var _ orgproto.OrganizationService = (*Service)(nil)
 
-// New creates a new organization service instance
-func New(db *sql.DB, logger *slog.Logger) orgproto.OrganizationService {
+// New creates a new organization service instance.
+func New(db *sql.DB, logger *slog.Logger) *Service {
 	serviceLogger := logger.With(
 		slog.Group("package_info",
 			slog.String("module", "organization"),
@@ -40,17 +38,12 @@ func New(db *sql.DB, logger *slog.Logger) orgproto.OrganizationService {
 		),
 	)
 
-	svc := &service{
+	svc := &Service{
 		logger: serviceLogger,
 		persister: &persistence.OrganizationStorage{
 			Conn: db,
 		},
 		dbConn: db,
-	}
-
-	// Set global service for backward compatibility
-	if Service == nil {
-		Service = svc
 	}
 
 	return svc

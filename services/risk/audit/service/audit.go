@@ -1,4 +1,4 @@
-package service
+package auditservice
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	auditproto "github.com/kianooshaz/skeleton/services/risk/audit/proto"
 )
 
-func (as *auditService) Record(record auditproto.Record) {
+func (as *Service) Record(record auditproto.Record) {
 	// Generate ID if not provided
 	if record.ID == auditproto.RecordID(uuid.Nil) {
 		record.ID = auditproto.RecordID(uuid.New())
@@ -20,7 +20,7 @@ func (as *auditService) Record(record auditproto.Record) {
 	as.recordCh <- record
 }
 
-func (as *auditService) Get(ctx context.Context, req auditproto.GetRequest) (auditproto.GetResponse, error) {
+func (as *Service) Get(ctx context.Context, req auditproto.GetRequest) (auditproto.GetResponse, error) {
 	record, err := as.persister.Get(ctx, req.ID)
 	if err != nil {
 		return auditproto.GetResponse{}, err
@@ -29,7 +29,7 @@ func (as *auditService) Get(ctx context.Context, req auditproto.GetRequest) (aud
 	return auditproto.GetResponse{Data: record}, nil
 }
 
-func (as *auditService) List(ctx context.Context, req auditproto.ListRequest) (auditproto.ListResponse, error) {
+func (as *Service) List(ctx context.Context, req auditproto.ListRequest) (auditproto.ListResponse, error) {
 	records, err := as.persister.List(ctx, req.Page, req.OrderBy)
 	if err != nil {
 		return auditproto.ListResponse{}, err
@@ -45,7 +45,7 @@ func (as *auditService) List(ctx context.Context, req auditproto.ListRequest) (a
 	}, nil
 }
 
-func (as *auditService) processRecords() {
+func (as *Service) processRecords() {
 	defer as.workerWg.Done()
 
 	for {
@@ -66,7 +66,7 @@ func (as *auditService) processRecords() {
 	}
 }
 
-func (as *auditService) Shutdown(ctx context.Context) {
+func (as *Service) Shutdown(ctx context.Context) {
 	close(as.shutdown)
 
 	done := make(chan struct{})

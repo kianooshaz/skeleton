@@ -1,4 +1,4 @@
-package authpass
+package passwordservice
 
 import (
 	"context"
@@ -10,8 +10,6 @@ import (
 	"github.com/kianooshaz/skeleton/services/authentication/password/persistence"
 	passwordproto "github.com/kianooshaz/skeleton/services/authentication/password/proto"
 )
-
-var PasswordService passwordproto.PasswordService = &Service{}
 
 type (
 	Config struct {
@@ -42,8 +40,10 @@ type (
 	}
 )
 
+var _ passwordproto.PasswordService = (*Service)(nil)
+
 // New creates a new password service instance.
-func New(cfg Config, db *sql.DB, logger *slog.Logger) passwordproto.PasswordService {
+func New(cfg Config, db *sql.DB, logger *slog.Logger) *Service {
 	serviceLogger := *logger.With(
 		slog.Group("package_info",
 			slog.String("module", "password"),
@@ -57,7 +57,7 @@ func New(cfg Config, db *sql.DB, logger *slog.Logger) passwordproto.PasswordServ
 	// 	commonPasswordsMap[password] = true
 	// }
 
-	svc := &Service{
+	return &Service{
 		config: cfg,
 		logger: serviceLogger,
 		storage: &persistence.PasswordStorage{
@@ -65,11 +65,4 @@ func New(cfg Config, db *sql.DB, logger *slog.Logger) passwordproto.PasswordServ
 		},
 		storageConn: db,
 	}
-
-	// Set global service for backward compatibility
-	if PasswordService == nil {
-		PasswordService = svc
-	}
-
-	return svc
 }

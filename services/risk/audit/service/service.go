@@ -1,4 +1,4 @@
-package service
+package auditservice
 
 import (
 	"context"
@@ -25,7 +25,7 @@ type (
 		Count(ctx context.Context) (int, error)
 	}
 
-	auditService struct {
+	Service struct {
 		config    Config
 		persister persister
 		logger    *slog.Logger
@@ -36,11 +36,9 @@ type (
 	}
 )
 
-// Service is the global service instance for backward compatibility
-// TODO: Remove this after all dependencies are migrated to DI
-var Service auditproto.AuditService
+var _ auditproto.AuditService = (*Service)(nil)
 
-// New creates a new audit service instance
+// New creates a new audit service instance.
 func New(cfg Config, db *sql.DB, logger *slog.Logger) auditproto.AuditService {
 	serviceLogger := logger.With(
 		slog.Group("package_info",
@@ -57,7 +55,7 @@ func New(cfg Config, db *sql.DB, logger *slog.Logger) auditproto.AuditService {
 		cfg.WorkerCount = 3
 	}
 
-	svc := &auditService{
+	svc := &Service{
 		config:    cfg,
 		persister: &persistence.AuditStorage{Conn: db},
 		logger:    serviceLogger,
@@ -70,11 +68,6 @@ func New(cfg Config, db *sql.DB, logger *slog.Logger) auditproto.AuditService {
 	// Start worker goroutines
 	for range cfg.WorkerCount {
 		go svc.processRecords()
-	}
-
-	// Set global service for backward compatibility
-	if Service == nil {
-		Service = svc
 	}
 
 	return svc

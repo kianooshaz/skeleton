@@ -1,4 +1,4 @@
-package authpass
+package passwordservice
 
 import (
 	"context"

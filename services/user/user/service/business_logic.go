@@ -1,4 +1,4 @@
-package uus
+package userservice
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	userproto "github.com/kianooshaz/skeleton/services/user/user/proto"
 )
 
-func (s *service) Create(ctx context.Context) (userproto.CreateResponse, error) {
+func (s *Service) Create(ctx context.Context) (userproto.CreateResponse, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
 		s.logger.ErrorContext(ctx, "Error encountered while generating user id", slog.String("error", err.Error()))
@@ -41,7 +41,7 @@ func (s *service) Create(ctx context.Context) (userproto.CreateResponse, error) 
 	}, nil
 }
 
-func (s *service) Get(ctx context.Context, req userproto.GetRequest) (userproto.GetResponse, error) {
+func (s *Service) Get(ctx context.Context, req userproto.GetRequest) (userproto.GetResponse, error) {
 	user, err := s.persister.Get(ctx, req.ID)
 	if err != nil {
 		if errors.Is(err, derror.ErrUserNotFound) {
@@ -61,7 +61,7 @@ func (s *service) Get(ctx context.Context, req userproto.GetRequest) (userproto.
 	return userproto.GetResponse{Data: user}, nil
 }
 
-func (s *service) List(ctx context.Context, req userproto.ListRequest) (userproto.ListResponse, error) {
+func (s *Service) List(ctx context.Context, req userproto.ListRequest) (userproto.ListResponse, error) {
 	users, err := s.persister.List(ctx, req.Page, req.OrderBy)
 	if err != nil {
 		s.logger.ErrorContext(

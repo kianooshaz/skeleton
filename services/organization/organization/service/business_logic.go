@@ -1,4 +1,4 @@
-package oos
+package orgservice
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	orgproto "github.com/kianooshaz/skeleton/services/organization/organization/proto"
 )
 
-func (s *service) Create(ctx context.Context) (orgproto.CreateResponse, error) {
+func (s *Service) Create(ctx context.Context) (orgproto.CreateResponse, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
 		s.logger.ErrorContext(
@@ -45,7 +45,7 @@ func (s *service) Create(ctx context.Context) (orgproto.CreateResponse, error) {
 	}, nil
 }
 
-func (s *service) Get(ctx context.Context, req orgproto.GetRequest) (orgproto.GetResponse, error) {
+func (s *Service) Get(ctx context.Context, req orgproto.GetRequest) (orgproto.GetResponse, error) {
 	organization, err := s.persister.Get(ctx, req.ID)
 	if err != nil {
 		if errors.Is(err, derror.ErrOrganizationNotFound) {
@@ -65,7 +65,7 @@ func (s *service) Get(ctx context.Context, req orgproto.GetRequest) (orgproto.Ge
 	return orgproto.GetResponse{Data: organization}, nil
 }
 
-func (s *service) List(ctx context.Context, req orgproto.ListRequest) (orgproto.ListResponse, error) {
+func (s *Service) List(ctx context.Context, req orgproto.ListRequest) (orgproto.ListResponse, error) {
 	organizations, err := s.persister.List(ctx, req.Page, req.OrderBy)
 	if err != nil {
 		s.logger.ErrorContext(

@@ -1,5 +1,5 @@
 // Package service provides the implementation of the UserService interface.
-package uus
+package userservice
 
 import (
 	"context"
@@ -20,19 +20,17 @@ type (
 		Count(ctx context.Context) (int, error)
 	}
 
-	service struct {
+	Service struct {
 		logger    *slog.Logger
 		persister persister
 		dbConn    *sql.DB
 	}
 )
 
-// Service is the global service instance for backward compatibility
-// TODO: Remove this after all dependencies are migrated to DI
-var Service userproto.UserService
+var _ userproto.UserService = (*Service)(nil)
 
 // New creates a new user service instance.
-func New(db *sql.DB, logger *slog.Logger) userproto.UserService {
+func New(db *sql.DB, logger *slog.Logger) *Service {
 	serviceLogger := logger.With(
 		slog.Group("package_info",
 			slog.String("module", "user"),
@@ -40,18 +38,11 @@ func New(db *sql.DB, logger *slog.Logger) userproto.UserService {
 		),
 	)
 
-	svc := &service{
+	return &Service{
 		logger: serviceLogger,
 		persister: &persistence.UserStorage{
 			Conn: db,
 		},
 		dbConn: db,
 	}
-
-	// Set global service for backward compatibility
-	if Service == nil {
-		Service = svc
-	}
-
-	return svc
 }
