@@ -5,9 +5,6 @@ This directory contains documentation for the skeleton project.
 ## Architecture Documentation
 
 - [ADD_SERVICE_GUIDE.md](ADD_SERVICE_GUIDE.md) - Comprehensive guide for adding new services to the container package and Wire dependency injection system
-- [ADD_SERVICE_QUICK_REFERENCE.md](ADD_SERVICE_QUICK_REFERENCE.md) - Quick checklist and templates for adding services
-- [CLEAN_WIRE.md](CLEAN_WIRE.md) - Wire cleanup procedures
-- [WIRE_CONTAINER.md](WIRE_CONTAINER.md) - Wire container documentation
 
 ## Service Development
 
