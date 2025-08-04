@@ -6,8 +6,6 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/kianooshaz/skeleton/foundation/config"
-	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/services/risk/audit/persistence"
@@ -16,8 +14,8 @@ import (
 
 type (
 	Config struct {
-		BufferSize  int
-		WorkerCount int
+		BufferSize  int `yaml:"buffer_size"`
+		WorkerCount int `yaml:"worker_count"`
 	}
 
 	persister interface {
@@ -28,6 +26,7 @@ type (
 	}
 
 	auditService struct {
+		config    Config
 		persister persister
 		logger    *slog.Logger
 		recordCh  chan auditproto.Record
@@ -37,31 +36,46 @@ type (
 	}
 )
 
+// Service is the global service instance for backward compatibility
+// TODO: Remove this after all dependencies are migrated to DI
 var Service auditproto.AuditService
 
-func init() {
-	cfg, err := config.Load[Config]("risk.audit")
-	if err != nil {
-		panic(err)
-	}
-
-	service := &auditService{
-		persister: &persistence.AuditStorage{Conn: postgres.ConnectionPool},
-		logger: slog.With(
-			slog.Group("package_info",
-				slog.String("module", "audit"),
-				slog.String("service", "audit"),
-			),
+// New creates a new audit service instance
+func New(cfg Config, db *sql.DB, logger *slog.Logger) auditproto.AuditService {
+	serviceLogger := logger.With(
+		slog.Group("package_info",
+			slog.String("module", "audit"),
+			slog.String("service", "audit"),
 		),
-		recordCh: make(chan auditproto.Record, cfg.BufferSize),
-		shutdown: make(chan struct{}),
-		workerWg: &sync.WaitGroup{},
-		dbConn:   postgres.ConnectionPool,
+	)
+
+	// Set default values if not configured
+	if cfg.BufferSize == 0 {
+		cfg.BufferSize = 1000
+	}
+	if cfg.WorkerCount == 0 {
+		cfg.WorkerCount = 3
 	}
 
+	svc := &auditService{
+		config:    cfg,
+		persister: &persistence.AuditStorage{Conn: db},
+		logger:    serviceLogger,
+		recordCh:  make(chan auditproto.Record, cfg.BufferSize),
+		shutdown:  make(chan struct{}),
+		workerWg:  &sync.WaitGroup{},
+		dbConn:    db,
+	}
+
+	// Start worker goroutines
 	for range cfg.WorkerCount {
-		go service.processRecords()
+		go svc.processRecords()
 	}
 
-	Service = service
+	// Set global service for backward compatibility
+	if Service == nil {
+		Service = svc
+	}
+
+	return svc
 }

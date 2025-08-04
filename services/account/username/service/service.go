@@ -6,14 +6,14 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
-	"github.com/kianooshaz/skeleton/foundation/config"
-	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/proto"
 	"github.com/kianooshaz/skeleton/services/account/username/persistence"
 	aunp "github.com/kianooshaz/skeleton/services/account/username/proto"
 )
 
-var UsernameService aunp.UsernameService = &Service{}
+// UsernameService is the global service instance for backward compatibility
+// TODO: Remove this after all dependencies are migrated to DI
+var UsernameService aunp.UsernameService
 
 type (
 	Config struct {
@@ -44,22 +44,28 @@ type (
 	}
 )
 
-func init() {
-	cfg, err := config.Load[Config]("account.username")
-	if err != nil {
-		panic(err)
+// New creates a new username service instance.
+func New(cfg Config, db *sql.DB, logger *slog.Logger) aunp.UsernameService {
+	serviceLogger := *logger.With(
+		slog.Group("package_info",
+			slog.String("module", "username"),
+			slog.String("service", "account"),
+		),
+	)
+
+	svc := &Service{
+		config: cfg,
+		logger: serviceLogger,
+		storage: &persistence.UsernameStorage{
+			Conn: db,
+		},
+		storageConn: db,
 	}
 
-	UsernameService = &Service{
-		config: cfg,
-		logger: *slog.With(
-			slog.Group("package_info",
-				slog.String("module", "username"),
-				slog.String("service", "account"),
-			),
-		),
-		storage: &persistence.UsernameStorage{
-			Conn: postgres.ConnectionPool,
-		},
+	// Set global service for backward compatibility
+	if UsernameService == nil {
+		UsernameService = svc
 	}
+
+	return svc
 }

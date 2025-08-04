@@ -38,9 +38,10 @@ type Config struct {
 type server struct {
 	core    *echo.Echo
 	address string
+	logger  *slog.Logger
 }
 
-func New(cfg Config) (protocol.WebService, error) {
+func New(cfg Config, logger *slog.Logger) (protocol.WebService, error) {
 	e := echo.New()
 
 	e.Debug = cfg.Debug
@@ -49,7 +50,7 @@ func New(cfg Config) (protocol.WebService, error) {
 	e.Server.ReadTimeout = cfg.ReadTimeout
 	e.Server.WriteTimeout = cfg.WriteTimeout
 	e.Server.IdleTimeout = cfg.IdleTimeout
-	e.Server.ErrorLog = slog.NewLogLogger(slog.Default().Handler(), slog.LevelError)
+	e.Server.ErrorLog = slog.NewLogLogger(logger.Handler(), slog.LevelError)
 	e.HTTPErrorHandler = ErrorResponse
 
 	// Middlewares
@@ -81,6 +82,7 @@ func New(cfg Config) (protocol.WebService, error) {
 	server := &server{
 		core:    e,
 		address: cfg.Address,
+		logger:  logger,
 	}
 
 	server.registerRoutes()

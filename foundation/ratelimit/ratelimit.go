@@ -48,7 +48,33 @@ type RateLimiterConfig struct {
 	TTL    time.Duration `yaml:"ttl" validate:"required"`
 }
 
-// New creates a new Sliding Window RateLimiter instance.
+// NewRateLimiter creates a new Sliding Window RateLimiter instance using dependency injection.
+// The redisClient parameter is the Redis client to use for rate limiting.
+// The cfg parameter contains the rate limiter configuration.
+// Returns a configured RateLimiter instance.
+func NewRateLimiter(redisClient redis.Cmdable, cfg RateLimiterConfig) *RateLimiter {
+	return &RateLimiter{
+		redisClient: redisClient,
+		limit:       cfg.Limit,
+		window:      cfg.Window,
+		ttl:         cfg.TTL,
+	}
+}
+
+// NewRateLimiterFromConfig creates a new RateLimiter instance by loading configuration.
+// The redisClient parameter is the Redis client to use.
+// The configLoader parameter is a function that loads the rate limiter configuration.
+// Returns a configured RateLimiter instance or an error.
+func NewRateLimiterFromConfig(redisClient redis.Cmdable, configLoader func() (RateLimiterConfig, error)) (*RateLimiter, error) {
+	cfg, err := configLoader()
+	if err != nil {
+		return nil, err
+	}
+	return NewRateLimiter(redisClient, cfg), nil
+}
+
+// Init creates a new Sliding Window RateLimiter instance and sets it globally.
+// Deprecated: Use NewRateLimiter or NewRateLimiterFromConfig with dependency injection instead.
 func Init(redisClient redis.Cmdable) {
 	cfg, err := config.Load[RateLimiterConfig]("ratelimit")
 	if err != nil {

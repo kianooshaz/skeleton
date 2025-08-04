@@ -1,4 +1,4 @@
-APP=rostam-stage
+APP=skeleton
 PORT=8080
 
 .which-go:
@@ -16,6 +16,9 @@ PORT=8080
 .which-sqlc:
 	@which sqlc > /dev/null || (echo "install sqlc from https://sqlc.dev" & exit 1)
 
+.which-wire:
+	@which wire > /dev/null || (echo "install wire: go install github.com/google/wire/cmd/wire@latest" & exit 1)
+
 .now:
 	@date
 
@@ -27,6 +30,18 @@ lint: .now  .which-golangci-lint
 
 swag: .now .which-swag
 	swag init --pd -g "../http.go"  --o "./docs/api/" --ot "go,json" --dir "./internal/transport/server/http/handler"
+
+wire: .now .which-wire
+	wire ./internal/container
+
+build: .now .which-go wire
+	go build -o bin/$(APP) ./cmd/skeleton
+
+run: build
+	./bin/$(APP)
+
+clean:
+	rm -rf bin/
 
 sqlc: .now .which-sqlc
 	sqlc -f build/sqlc.yaml generate

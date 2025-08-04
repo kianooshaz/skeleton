@@ -6,8 +6,6 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
-	"github.com/kianooshaz/skeleton/foundation/config"
-	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/proto"
 	"github.com/kianooshaz/skeleton/services/authentication/password/persistence"
 	passwordproto "github.com/kianooshaz/skeleton/services/authentication/password/proto"
@@ -44,29 +42,34 @@ type (
 	}
 )
 
-func init() {
-	cfg, err := config.Load[Config]("authentication.password")
-	if err != nil {
-		panic(err)
-	}
+// New creates a new password service instance.
+func New(cfg Config, db *sql.DB, logger *slog.Logger) passwordproto.PasswordService {
+	serviceLogger := *logger.With(
+		slog.Group("package_info",
+			slog.String("module", "password"),
+			slog.String("service", "authentication"),
+		),
+	)
 
 	// TODO load common passwords from assets
-
 	// var commonPasswordsMap = make(map[string]bool)
 	// for _, password := range commonPasswords {
 	// 	commonPasswordsMap[password] = true
 	// }
 
-	PasswordService = &Service{
+	svc := &Service{
 		config: cfg,
-		logger: *slog.With(
-			slog.Group("package_info",
-				slog.String("module", "password"),
-				slog.String("service", "authentication"),
-			),
-		),
+		logger: serviceLogger,
 		storage: &persistence.PasswordStorage{
-			Conn: postgres.ConnectionPool,
+			Conn: db,
 		},
+		storageConn: db,
 	}
+
+	// Set global service for backward compatibility
+	if PasswordService == nil {
+		PasswordService = svc
+	}
+
+	return svc
 }

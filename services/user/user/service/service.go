@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"log/slog"
 
-	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/services/user/user/persistence"
@@ -28,19 +27,31 @@ type (
 	}
 )
 
-var Service userproto.UserService = &service{}
+// Service is the global service instance for backward compatibility
+// TODO: Remove this after all dependencies are migrated to DI
+var Service userproto.UserService
 
-func init() {
-	Service = &service{
-		logger: slog.With(
-			slog.Group("package_info",
-				slog.String("module", "user"),
-				slog.String("service", "user"),
-			),
+// New creates a new user service instance.
+func New(db *sql.DB, logger *slog.Logger) userproto.UserService {
+	serviceLogger := logger.With(
+		slog.Group("package_info",
+			slog.String("module", "user"),
+			slog.String("service", "user"),
 		),
+	)
+
+	svc := &service{
+		logger: serviceLogger,
 		persister: &persistence.UserStorage{
-			Conn: postgres.ConnectionPool,
+			Conn: db,
 		},
-		dbConn: postgres.ConnectionPool,
+		dbConn: db,
 	}
+
+	// Set global service for backward compatibility
+	if Service == nil {
+		Service = svc
+	}
+
+	return svc
 }

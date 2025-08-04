@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kianooshaz/skeleton/foundation/config"
 	_ "github.com/lib/pq" // PostgreSQL driver for database/sql
 )
 
@@ -20,27 +19,35 @@ type Config struct {
 	PingTimeout time.Duration `yaml:"ping_timeout"`
 }
 
+// ConnectionPool is the global connection pool for backward compatibility
+// TODO: Remove this after all services are refactored
 var ConnectionPool *sql.DB
 
-func init() {
-	cfg, err := config.Load[Config]("database.postgres")
-	if err != nil {
-		panic(fmt.Sprintf("error loading config: %v", err))
-	}
-
+// NewConnection creates a new database connection
+func NewConnection(cfg Config) (*sql.DB, error) {
 	connectionPool, err := sql.Open("postgres", dsn(cfg))
 	if err != nil {
-		panic(fmt.Sprintf("error opening database connection: %v", err))
+		return nil, fmt.Errorf("error opening database connection: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.PingTimeout)
+	pingTimeout := cfg.PingTimeout
+	if pingTimeout == 0 {
+		pingTimeout = 10 * time.Second // default timeout
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), pingTimeout)
 	defer cancel()
 
 	if err = connectionPool.PingContext(ctx); err != nil {
-		panic(fmt.Sprintf("error pinging database: %v", err))
+		return nil, fmt.Errorf("error pinging database: %w", err)
 	}
 
-	ConnectionPool = connectionPool
+	// Set the global variable for backward compatibility
+	if ConnectionPool == nil {
+		ConnectionPool = connectionPool
+	}
+
+	return connectionPool, nil
 }
 
 func dsn(cfg Config) string {

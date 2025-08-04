@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"log/slog"
 
-	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	"github.com/kianooshaz/skeleton/foundation/order"
 	"github.com/kianooshaz/skeleton/foundation/pagination"
 	"github.com/kianooshaz/skeleton/services/organization/organization/persistence"
@@ -28,19 +27,31 @@ type (
 	}
 )
 
-var Service orgproto.OrganizationService = &service{}
+// Service is the global service instance for backward compatibility
+// TODO: Remove this after all dependencies are migrated to DI
+var Service orgproto.OrganizationService
 
-func init() {
-	Service = &service{
-		logger: slog.With(
-			slog.Group("package_info",
-				slog.String("module", "organization"),
-				slog.String("service", "organization"),
-			),
+// New creates a new organization service instance
+func New(db *sql.DB, logger *slog.Logger) orgproto.OrganizationService {
+	serviceLogger := logger.With(
+		slog.Group("package_info",
+			slog.String("module", "organization"),
+			slog.String("service", "organization"),
 		),
+	)
+
+	svc := &service{
+		logger: serviceLogger,
 		persister: &persistence.OrganizationStorage{
-			Conn: postgres.ConnectionPool,
+			Conn: db,
 		},
-		dbConn: postgres.ConnectionPool,
+		dbConn: db,
 	}
+
+	// Set global service for backward compatibility
+	if Service == nil {
+		Service = svc
+	}
+
+	return svc
 }
