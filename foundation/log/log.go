@@ -13,10 +13,6 @@ type LoggerConfig struct {
 	Format      string `yaml:"format" validate:"required,oneof=json text"`
 }
 
-type config struct {
-	AppEnv string `env:"APP_ENV" envDefault:"development"`
-}
-
 // NewLogger creates a new logger instance with proper configuration using dependency injection.
 // The cfg parameter contains the logger configuration.
 // Returns a configured logger instance.

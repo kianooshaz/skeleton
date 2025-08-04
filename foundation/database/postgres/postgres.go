@@ -19,11 +19,9 @@ type Config struct {
 	PingTimeout time.Duration `yaml:"ping_timeout"`
 }
 
-// ConnectionPool is the global connection pool for backward compatibility
-// TODO: Remove this after all services are refactored
-var ConnectionPool *sql.DB
+var defaultPingTimeout = 10 * time.Second
 
-// NewConnection creates a new database connection
+// NewConnection creates a new database connection.
 func NewConnection(cfg Config) (*sql.DB, error) {
 	connectionPool, err := sql.Open("postgres", dsn(cfg))
 	if err != nil {
@@ -32,7 +30,7 @@ func NewConnection(cfg Config) (*sql.DB, error) {
 
 	pingTimeout := cfg.PingTimeout
 	if pingTimeout == 0 {
-		pingTimeout = 10 * time.Second // default timeout
+		pingTimeout = defaultPingTimeout
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), pingTimeout)
@@ -40,11 +38,6 @@ func NewConnection(cfg Config) (*sql.DB, error) {
 
 	if err = connectionPool.PingContext(ctx); err != nil {
 		return nil, fmt.Errorf("error pinging database: %w", err)
-	}
-
-	// Set the global variable for backward compatibility
-	if ConnectionPool == nil {
-		ConnectionPool = connectionPool
 	}
 
 	return connectionPool, nil
