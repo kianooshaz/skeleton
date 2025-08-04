@@ -10,9 +10,7 @@ This directory contains documentation for the skeleton project.
 
 When adding new services to this project, follow these steps:
 
-1. **Quick Start**: Use the [Quick Reference Guide](ADD_SERVICE_QUICK_REFERENCE.md) for a step-by-step checklist
-2. **Detailed Guide**: Refer to the [Complete Service Guide](ADD_SERVICE_GUIDE.md) for comprehensive instructions and examples
-3. **Wire Cleanup**: Use [Clean Wire Guide](CLEAN_WIRE.md) if you need to reset or troubleshoot Wire dependencies
+1. **Guide**: Refer to the [Complete Service Guide](ADD_SERVICE_GUIDE.md) for comprehensive instructions and examples
 
 ## Key Concepts
 
