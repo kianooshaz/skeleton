@@ -27,7 +27,7 @@ import (
 	userservice "github.com/kianooshaz/skeleton/services/user/user/service"
 )
 
-// Simple config extraction functions - Wire can use these automatically
+// Simple config extraction functions - Wire can use these automatically.
 func ProvideAppConfig(k *koanf.Koanf) (*AppConfig, error) {
 	cfg, err := config.LoadFromKoanf[AppConfig](k, "app")
 	if err != nil {
@@ -43,7 +43,7 @@ func ProvideRestConfig(cfg *AppConfig) rest.Config                { return cfg.R
 func ProvideLoggerConfig(cfg *AppConfig) log.LoggerConfig         { return cfg.Logger }
 func ProvidePostgresConfig(cfg *AppConfig) postgres.Config        { return cfg.Postgres }
 
-// ProvideWebContainer provides the complete web container
+// ProvideWebContainer provides the complete web container.
 func ProvideWebContainer(
 	cfg *AppConfig,
 	logger *slog.Logger,
@@ -54,21 +54,21 @@ func ProvideWebContainer(
 	passwordService passwordproto.PasswordService,
 	usernameService usernameproto.UsernameService,
 	auditService auditproto.AuditService,
-) *WebContainer {
+) Container {
 	return &WebContainer{
-		Config:              cfg,
-		Logger:              logger,
-		DB:                  db,
-		WebService:          webService,
-		UserService:         userService,
-		OrganizationService: orgService,
-		PasswordService:     passwordService,
-		UsernameService:     usernameService,
-		AuditService:        auditService,
+		config:              cfg,
+		logger:              logger,
+		db:                  db,
+		webService:          webService,
+		userService:         userService,
+		organizationService: orgService,
+		passwordService:     passwordService,
+		usernameService:     usernameService,
+		auditService:        auditService,
 	}
 }
 
-// Wire sets define the dependency injection graph
+// Wire sets define the dependency injection graph.
 var ConfigSet = wire.NewSet(
 	config.LoadConfigWithDefaults,
 	ProvideAppConfig,
@@ -101,8 +101,8 @@ var WebContainerSet = wire.NewSet(
 	ProvideWebContainer,
 )
 
-// NewWebContainer creates a new web container with all dependencies wired
-func NewWebContainer() (*WebContainer, error) {
+// NewWebContainer creates a new web container with all dependencies wired.
+func NewWebContainer() (Container, error) {
 	wire.Build(WebContainerSet)
 	return nil, nil
 }

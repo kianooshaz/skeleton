@@ -29,30 +29,21 @@ func run() error {
 		return fmt.Errorf("initializing container: %w", err)
 	}
 
-	// Ensure proper cleanup
-	defer func() {
-		if closeErr := c.Close(); closeErr != nil {
-			slog.Error("Failed to close container", "error", closeErr)
-		}
-	}()
-
 	// Start all services
-	if err := c.Start(); err != nil {
-		return fmt.Errorf("starting services: %w", err)
+	if err := c.Start(cancel); err != nil {
+		cancel()
 	}
 
-	c.Logger.Info("Application started successfully")
+	c.Logger().Info("Application started successfully")
 
-	// Wait for shutdown signal
-	if err := waitForShutdown(ctx, c); err != nil {
-		return fmt.Errorf("shutdown failed: %w", err)
-	}
+	waitForShutdown(ctx, c)
 
-	c.Logger.Info("Application shut down successfully")
+	c.Logger().Info("Application shut down gracefully")
+
 	return nil
 }
 
-func waitForShutdown(ctx context.Context, c *container.WebContainer) error {
+func waitForShutdown(ctx context.Context, c container.Container) {
 	// Setup signal handling
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
@@ -61,19 +52,12 @@ func waitForShutdown(ctx context.Context, c *container.WebContainer) error {
 	// Wait for shutdown signal
 	select {
 	case sig := <-shutdown:
-		c.Logger.Info("Received shutdown signal", "signal", sig.String())
+		c.Logger().Info("Received shutdown signal", "signal", sig)
 	case <-ctx.Done():
-		c.Logger.Info("Context cancelled, shutting down")
+		c.Logger().Info("Context cancelled, shutting down")
 	}
 
-	// Create timeout context for graceful shutdown
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), c.Config.ShutdownTimeout)
-	defer cancel()
-
-	// Perform graceful shutdown
-	if err := c.Stop(shutdownCtx); err != nil {
-		return fmt.Errorf("stopping container: %w", err)
+	if err := c.Stop(); err != nil {
+		c.Logger().Error("Error stopping container", "error", err)
 	}
-
-	return nil
 }

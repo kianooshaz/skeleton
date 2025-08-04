@@ -8,31 +8,30 @@ package container
 
 import (
 	"database/sql"
-	"log/slog"
-
 	"github.com/google/wire"
 	"github.com/kianooshaz/skeleton/foundation/config"
 	"github.com/kianooshaz/skeleton/foundation/database/postgres"
 	"github.com/kianooshaz/skeleton/foundation/log"
 	"github.com/kianooshaz/skeleton/internal/app/web/protocol"
 	"github.com/kianooshaz/skeleton/internal/app/web/rest"
-	usernameproto "github.com/kianooshaz/skeleton/services/account/username/proto"
-	usernameservice "github.com/kianooshaz/skeleton/services/account/username/service"
-	passwordproto "github.com/kianooshaz/skeleton/services/authentication/password/proto"
-	passwordservice "github.com/kianooshaz/skeleton/services/authentication/password/service"
-	orgproto "github.com/kianooshaz/skeleton/services/organization/organization/proto"
-	orgservice "github.com/kianooshaz/skeleton/services/organization/organization/service"
-	auditproto "github.com/kianooshaz/skeleton/services/risk/audit/proto"
-	auditservice "github.com/kianooshaz/skeleton/services/risk/audit/service"
-	userproto "github.com/kianooshaz/skeleton/services/user/user/proto"
-	userservice "github.com/kianooshaz/skeleton/services/user/user/service"
+	"github.com/kianooshaz/skeleton/services/account/username/proto"
+	"github.com/kianooshaz/skeleton/services/account/username/service"
+	"github.com/kianooshaz/skeleton/services/authentication/password/proto"
+	"github.com/kianooshaz/skeleton/services/authentication/password/service"
+	"github.com/kianooshaz/skeleton/services/organization/organization/proto"
+	"github.com/kianooshaz/skeleton/services/organization/organization/service"
+	"github.com/kianooshaz/skeleton/services/risk/audit/proto"
+	"github.com/kianooshaz/skeleton/services/risk/audit/service"
+	"github.com/kianooshaz/skeleton/services/user/user/proto"
+	"github.com/kianooshaz/skeleton/services/user/user/service"
 	"github.com/knadh/koanf/v2"
+	"log/slog"
 )
 
 // Injectors from wire.go:
 
-// NewWebContainer creates a new web container with all dependencies wired
-func NewWebContainer() (*WebContainer, error) {
+// NewWebContainer creates a new web container with all dependencies wired.
+func NewWebContainer() (Container, error) {
 	koanf, err := config.LoadConfigWithDefaults()
 	if err != nil {
 		return nil, err
@@ -61,13 +60,13 @@ func NewWebContainer() (*WebContainer, error) {
 	if err != nil {
 		return nil, err
 	}
-	webContainer := ProvideWebContainer(appConfig, logger, db, webService, userService, organizationService, passwordService, usernameService, auditService)
-	return webContainer, nil
+	container := ProvideWebContainer(appConfig, logger, db, webService, userService, organizationService, passwordService, usernameService, auditService)
+	return container, nil
 }
 
 // wire.go:
 
-// Simple config extraction functions - Wire can use these automatically
+// Simple config extraction functions - Wire can use these automatically.
 func ProvideAppConfig(k *koanf.Koanf) (*AppConfig, error) {
 	cfg, err := config.LoadFromKoanf[AppConfig](k, "app")
 	if err != nil {
@@ -88,7 +87,7 @@ func ProvideLoggerConfig(cfg *AppConfig) log.LoggerConfig { return cfg.Logger }
 
 func ProvidePostgresConfig(cfg *AppConfig) postgres.Config { return cfg.Postgres }
 
-// ProvideWebContainer provides the complete web container
+// ProvideWebContainer provides the complete web container.
 func ProvideWebContainer(
 	cfg *AppConfig,
 	logger *slog.Logger,
@@ -99,21 +98,21 @@ func ProvideWebContainer(
 	passwordService passwordproto.PasswordService,
 	usernameService usernameproto.UsernameService,
 	auditService auditproto.AuditService,
-) *WebContainer {
+) Container {
 	return &WebContainer{
-		Config:              cfg,
-		Logger:              logger,
-		DB:                  db,
-		WebService:          webService,
-		UserService:         userService,
-		OrganizationService: orgService,
-		PasswordService:     passwordService,
-		UsernameService:     usernameService,
-		AuditService:        auditService,
+		config:              cfg,
+		logger:              logger,
+		db:                  db,
+		webService:          webService,
+		userService:         userService,
+		organizationService: orgService,
+		passwordService:     passwordService,
+		usernameService:     usernameService,
+		auditService:        auditService,
 	}
 }
 
-// Wire sets define the dependency injection graph
+// Wire sets define the dependency injection graph.
 var ConfigSet = wire.NewSet(config.LoadConfigWithDefaults, ProvideAppConfig,
 	ProvidePasswordConfig,
 	ProvideUsernameConfig,
