@@ -27,10 +27,8 @@ type (
 	}
 )
 
-var _ orgproto.OrganizationService = (*Service)(nil)
-
 // New creates a new organization service instance.
-func New(db *sql.DB, logger *slog.Logger) *Service {
+func New(db *sql.DB, logger *slog.Logger) orgproto.OrganizationService {
 	serviceLogger := logger.With(
 		slog.Group("package_info",
 			slog.String("module", "organization"),

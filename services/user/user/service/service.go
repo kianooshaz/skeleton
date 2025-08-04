@@ -27,10 +27,8 @@ type (
 	}
 )
 
-var _ userproto.UserService = (*Service)(nil)
-
 // New creates a new user service instance.
-func New(db *sql.DB, logger *slog.Logger) *Service {
+func New(db *sql.DB, logger *slog.Logger) userproto.UserService {
 	serviceLogger := logger.With(
 		slog.Group("package_info",
 			slog.String("module", "user"),

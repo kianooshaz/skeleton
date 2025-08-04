@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	accprotocol "github.com/kianooshaz/skeleton/services/account/accounts/proto"
 	"github.com/kianooshaz/skeleton/services/account/username/persistence"
-	aunp "github.com/kianooshaz/skeleton/services/account/username/proto"
+	usernameproto "github.com/kianooshaz/skeleton/services/account/username/proto"
 )
 
 type (
@@ -20,14 +20,14 @@ type (
 	}
 
 	Storer interface {
-		Create(ctx context.Context, username aunp.Username) error
+		Create(ctx context.Context, username usernameproto.Username) error
 		Delete(ctx context.Context, id uuid.UUID) error
-		Get(ctx context.Context, id uuid.UUID) (aunp.Username, error)
-		ListWithSearch(ctx context.Context, req aunp.ListRequest) ([]aunp.Username, error)
-		CountWithSearch(ctx context.Context, req aunp.ListRequest) (int64, error)
+		Get(ctx context.Context, id uuid.UUID) (usernameproto.Username, error)
+		ListWithSearch(ctx context.Context, req usernameproto.ListRequest) ([]usernameproto.Username, error)
+		CountWithSearch(ctx context.Context, req usernameproto.ListRequest) (int64, error)
 
-		ListByUserAndOrganization(ctx context.Context, req aunp.ListAssignedRequest) ([]aunp.Username, error)
-		UpdateStatus(ctx context.Context, username aunp.Username) error
+		ListByUserAndOrganization(ctx context.Context, req usernameproto.ListAssignedRequest) ([]usernameproto.Username, error)
+		UpdateStatus(ctx context.Context, username usernameproto.Username) error
 		Exist(ctx context.Context, username string) (bool, error)
 		CountByAccount(ctx context.Context, accountID accprotocol.AccountID) (int64, error)
 	}
@@ -40,10 +40,8 @@ type (
 	}
 )
 
-var _ aunp.UsernameService = (*Service)(nil)
-
 // New creates a new username service instance.
-func New(cfg Config, db *sql.DB, logger *slog.Logger) aunp.UsernameService {
+func New(cfg Config, db *sql.DB, logger *slog.Logger) usernameproto.UsernameService {
 	serviceLogger := *logger.With(
 		slog.Group("package_info",
 			slog.String("module", "username"),

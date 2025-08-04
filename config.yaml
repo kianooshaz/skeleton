@@ -33,14 +33,26 @@ app:
     password: "skeleton_pass"
     ssl_mode: "disable"
     ping_timeout: "10s"
-  account:
-    username:
-      max_user_username_per_organization: 5
-      min_length: 3
-      max_length: 50
-      allow_characters: "abcdefghijklmnopqrstuvwxyz0123456789_"
-  risk:
-    audit:
-      buffer_size: 1000
-      worker_count: 3
+  password:
+    min_length: 8
+    allow_characters: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+    cost: 12
+    check_password_history_limit: 5
+    required_guidelines:
+      - "At least 8 characters long"
+      - "Contains uppercase and lowercase letters"
+      - "Contains at least one number"
+      - "Contains at least one special character"
+    better_have:
+      - "Longer than 12 characters"
+      - "Avoid common passwords"
+      - "Use unique passwords for different accounts"
+  username:
+    max_user_username_per_organization: 5
+    min_length: 3
+    max_length: 50
+    allow_characters: "abcdefghijklmnopqrstuvwxyz0123456789_"
+  audit:
+    buffer_size: 1000
+    worker_count: 3
 

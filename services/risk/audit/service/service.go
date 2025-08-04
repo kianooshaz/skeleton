@@ -36,8 +36,6 @@ type (
 	}
 )
 
-var _ auditproto.AuditService = (*Service)(nil)
-
 // New creates a new audit service instance.
 func New(cfg Config, db *sql.DB, logger *slog.Logger) auditproto.AuditService {
 	serviceLogger := logger.With(

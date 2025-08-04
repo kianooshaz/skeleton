@@ -7,7 +7,11 @@ import (
 
 	"github.com/kianooshaz/skeleton/foundation/session"
 	"github.com/kianooshaz/skeleton/internal/app/web/protocol"
+	usernameproto "github.com/kianooshaz/skeleton/services/account/username/proto"
 	passwordproto "github.com/kianooshaz/skeleton/services/authentication/password/proto"
+	orgproto "github.com/kianooshaz/skeleton/services/organization/organization/proto"
+	auditproto "github.com/kianooshaz/skeleton/services/risk/audit/proto"
+	userproto "github.com/kianooshaz/skeleton/services/user/user/proto"
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
 )
@@ -36,19 +40,21 @@ type Config struct {
 	}
 }
 
-type Services struct {
-	PasswordService passwordproto.PasswordService
-	// Add other services as needed
-}
-
 type server struct {
-	core     *echo.Echo
-	address  string
-	logger   *slog.Logger
-	services Services
+	core    *echo.Echo
+	address string
+	logger  *slog.Logger
 }
 
-func New(cfg Config, logger *slog.Logger, services Services) (protocol.WebService, error) {
+func New(
+	cfg Config,
+	logger *slog.Logger,
+	UserService userproto.UserService,
+	OrganizationService orgproto.OrganizationService,
+	PasswordService passwordproto.PasswordService,
+	UsernameService usernameproto.UsernameService,
+	AuditService auditproto.AuditService,
+) (protocol.WebService, error) {
 	e := echo.New()
 
 	e.Debug = cfg.Debug
@@ -87,13 +93,18 @@ func New(cfg Config, logger *slog.Logger, services Services) (protocol.WebServic
 	}
 
 	server := &server{
-		core:     e,
-		address:  cfg.Address,
-		logger:   logger,
-		services: services,
+		core:    e,
+		address: cfg.Address,
+		logger:  logger,
 	}
 
-	server.registerRoutes()
+	server.registerRoutes(
+		UserService,
+		OrganizationService,
+		PasswordService,
+		UsernameService,
+		AuditService,
+	)
 
 	return server, nil
 }

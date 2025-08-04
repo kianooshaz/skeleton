@@ -40,10 +40,8 @@ type (
 	}
 )
 
-var _ passwordproto.PasswordService = (*Service)(nil)
-
 // New creates a new password service instance.
-func New(cfg Config, db *sql.DB, logger *slog.Logger) *Service {
+func New(cfg Config, db *sql.DB, logger *slog.Logger) passwordproto.PasswordService {
 	serviceLogger := *logger.With(
 		slog.Group("package_info",
 			slog.String("module", "password"),
