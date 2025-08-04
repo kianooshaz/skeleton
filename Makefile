@@ -37,6 +37,9 @@ wire: .now .which-wire
 build: .now .which-go wire
 	go build -o bin/$(APP) ./cmd/skeleton
 
+test-container: .now .which-go
+	go run ./cmd/test-container
+
 run: build
 	./bin/$(APP)
 

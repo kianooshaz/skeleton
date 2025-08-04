@@ -7,6 +7,7 @@ import (
 
 	"github.com/kianooshaz/skeleton/foundation/session"
 	"github.com/kianooshaz/skeleton/internal/app/web/protocol"
+	passwordproto "github.com/kianooshaz/skeleton/services/authentication/password/proto"
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
 )
@@ -35,13 +36,19 @@ type Config struct {
 	}
 }
 
-type server struct {
-	core    *echo.Echo
-	address string
-	logger  *slog.Logger
+type Services struct {
+	userService passwordproto.PasswordService
+	// Add other services as needed
 }
 
-func New(cfg Config, logger *slog.Logger) (protocol.WebService, error) {
+type server struct {
+	core     *echo.Echo
+	address  string
+	logger   *slog.Logger
+	services Services
+}
+
+func New(cfg Config, logger *slog.Logger, services Services) (protocol.WebService, error) {
 	e := echo.New()
 
 	e.Debug = cfg.Debug
@@ -80,9 +87,10 @@ func New(cfg Config, logger *slog.Logger) (protocol.WebService, error) {
 	}
 
 	server := &server{
-		core:    e,
-		address: cfg.Address,
-		logger:  logger,
+		core:     e,
+		address:  cfg.Address,
+		logger:   logger,
+		services: services,
 	}
 
 	server.registerRoutes()

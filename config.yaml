@@ -1,0 +1,46 @@
+app:
+  shutdown_timeout: "30s"
+  logger:
+    environment: "development"
+    level: "debug"
+    add_source: true
+    format: "json"
+  rest_server:
+    debug: true
+    address: ":8080"
+    read_timeout: "30s"
+    write_timeout: "30s"
+    idle_timeout: "30s"
+    body_limit_size: "2M"
+    cors:
+      enable: true
+      allowed_origins: ['*']
+      allowed_headers: []
+      allowed_methods: ['GET', 'HEAD', 'PUT', 'POST', 'PATCH', 'DELETE']
+      allow_credentials: false
+      exposed_headers: []
+      max_age: 0
+    rate_limit:
+      enable: false
+      rate: 10
+      burst: 100
+      duration: "1m"
+  postgres:
+    name: "skeleton"
+    host: "localhost"
+    port: 5432
+    user: "skeleton_user"
+    password: "skeleton_pass"
+    ssl_mode: "disable"
+    ping_timeout: "10s"
+  account:
+    username:
+      max_user_username_per_organization: 5
+      min_length: 3
+      max_length: 50
+      allow_characters: "abcdefghijklmnopqrstuvwxyz0123456789_"
+  risk:
+    audit:
+      buffer_size: 1000
+      worker_count: 3
+
