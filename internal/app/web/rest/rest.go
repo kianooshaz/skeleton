@@ -49,11 +49,11 @@ type server struct {
 func New(
 	cfg Config,
 	logger *slog.Logger,
-	UserService userproto.UserService,
-	OrganizationService orgproto.OrganizationService,
-	PasswordService passwordproto.PasswordService,
-	UsernameService usernameproto.UsernameService,
-	AuditService auditproto.AuditService,
+	userService userproto.UserService,
+	organizationService orgproto.OrganizationService,
+	passwordService passwordproto.PasswordService,
+	usernameService usernameproto.UsernameService,
+	auditService auditproto.AuditService,
 ) (protocol.WebService, error) {
 	e := echo.New()
 
@@ -99,11 +99,11 @@ func New(
 	}
 
 	server.registerRoutes(
-		UserService,
-		OrganizationService,
-		PasswordService,
-		UsernameService,
-		AuditService,
+		userService,
+		organizationService,
+		passwordService,
+		usernameService,
+		auditService,
 	)
 
 	return server, nil

@@ -9,14 +9,14 @@ import (
 )
 
 func (s *server) registerRoutes(
-	UserService userproto.UserService,
-	OrganizationService orgproto.OrganizationService,
-	PasswordService passwordproto.PasswordService,
-	UsernameService usernameproto.UsernameService,
-	AuditService auditproto.AuditService,
+	userService userproto.UserService,
+	organizationService orgproto.OrganizationService,
+	passwordService passwordproto.PasswordService,
+	usernameService usernameproto.UsernameService,
+	auditService auditproto.AuditService,
 ) {
 	s.core.GET("/health", HealthCheck)
 
-	// s.core.GET("/user", registerHandler(userService.Service.Get))
+	s.core.GET("/user", registerHandler(userService.Get))
 	// s.core.GET("/user/list", registerHandler(userService.Service.List))
 }
